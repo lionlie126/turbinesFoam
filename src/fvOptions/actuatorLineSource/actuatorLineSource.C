@@ -268,7 +268,6 @@ void Foam::fv::actuatorLineSource::createElements()
         position = point1
                  + segment/nElementsPerSegment*pointIndex
                  + segment/nElementsPerSegment/2;
-        Info<< "position: " << position << endl;
 
         // Linearly interpolate chordLength
         scalar chordLength1 = chordLengths[geometrySegmentIndex];
@@ -340,8 +339,7 @@ void Foam::fv::actuatorLineSource::createElements()
                        + deltaProfileTypeIDTotal/nElementsPerSegment/2;
         
         word profileName = elementProfiles_[profileTypeID];
-        
-        Info<< "profileTypeID: " << profileTypeID << endl;
+
 	word velEval;
 	word forceProj;
 	word gaussRadType;
@@ -432,7 +430,7 @@ void Foam::fv::actuatorLineSource::createElements()
         );
         elements_.set(i, element);
         pitch = Foam::degToRad(pitch);
-        elements_[i].pitch(-pitch); //pitching the elements 
+        elements_[i].pitch(-pitch);
         elements_[i].setVelocity(initialVelocity);
 	numOfElement++;
 

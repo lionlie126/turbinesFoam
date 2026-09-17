@@ -174,7 +174,7 @@ void Foam::fv::axialFlowTurbineALSource::createBlades()
 
             // Create geometry point for AL source at origin
             vector point = origin_;
-            // Move point along axial direction (as intended)
+            // Move point along axial direction
             if (axis_ == vector(-1,0,0))
             {
 				point += axialDistance*axis_;
@@ -705,9 +705,8 @@ void Foam::fv::axialFlowTurbineALSource::yaw(scalar radians)
             << endl << endl;
     }
 
-    // axis_ is a direction vector — rotate around vector::zero, not origin_.
-    // Using origin_ as the pivot for a direction introduces a spurious
-    // positional offset identical to the bug that existed in tilt().
+    // Direction vectors rotate about vector::zero; using the hub as the pivot
+    // would introduce a spurious positional offset.
     rotateVector(axis_, vector::zero, verticalDirection_, radians);
 
     forAll(blades_, i)
@@ -729,23 +728,16 @@ void Foam::fv::axialFlowTurbineALSource::tilt(scalar radians)
             << " deg around hub at " << origin_ << endl;
     }
 
-    // FIX 1: Determine tilt axis from the sign of azimuthalDirection_.y()
-    // rather than comparing exactly to vector(0,±1,0). Exact floating-point
-    // equality on a computed, normalised vector is fragile and silently
-    // applies zero tilt for any non-axis-aligned rotor orientation.
+    // Determine the tilt sign without exact comparisons against a computed,
+    // normalized direction vector.
     scalar tiltSign = (azimuthalDirection_.y() >= 0) ? -1.0 : 1.0;
     vector tiltAxis = tiltSign * azimuthalDirection_;
     tiltAxis /= mag(tiltAxis);
 
-    // FIX 2: axis_ is a DIRECTION vector, not a position.
-    // rotateVector() subtracts the rotation point before applying the matrix
-    // and adds it back after. For a direction this offset must be zero.
-    // Using origin_ here introduced an error of ~origin_.z * sin(tilt) in
-    // the rotated axis direction whenever the hub was not at (0,0,0).
+    // axis_ is a direction vector, so it must rotate about vector::zero.
     rotateVector(axis_, vector::zero, tiltAxis, radians);
 
-    // FIX 3: Blade element POSITIONS are correctly rotated around origin_
-    // (the hub) — points in space pivot around the hub, which is right.
+    // Blade and hub positions rotate about the turbine origin.
     forAll(blades_, i)
     {
         blades_[i].rotate(origin_, tiltAxis, radians);
@@ -756,8 +748,7 @@ void Foam::fv::axialFlowTurbineALSource::tilt(scalar radians)
         hub_->rotate(origin_, tiltAxis, radians);
     }
 
-    // FIX 4: Domain clearance check — warn at startup if any element lies
-    // outside the mesh after tilting, rather than crashing mid-simulation.
+    // Warn at startup if tilting places a blade element outside the mesh.
     if (Pstream::master())
     {
         boundBox domainBB(mesh_.points(), false);

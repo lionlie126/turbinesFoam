@@ -1073,7 +1073,7 @@ Foam::scalar Foam::fv::actuatorLineElement::calcAngleOfAttackCorrected()
              << angleOfAttackUncorrected << " deg" << endl;
     }
     
-    // Use fixed-point iteration for first attempt (original method)
+    // Attempt relaxed fixed-point iteration first
     scalar angleOfAttackCorrected = angleOfAttackUncorrected;
     scalar angleOfAttackDifference = VGREAT;
     label counter = 0;
@@ -1084,7 +1084,7 @@ Foam::scalar Foam::fv::actuatorLineElement::calcAngleOfAttackCorrected()
     scalar stallAngle = 12.0;
     label  divergenceCount = 0;    // consecutive increases needed before switching
     
-    // First try pure fixed-point iteration (the original method) for several iterations
+    // Try relaxed fixed-point iteration for several iterations
     while (angleOfAttackDifference > tolerance && counter < 100)
     {
         scalar oldAngleOfAttackCorrected = angleOfAttackCorrected;

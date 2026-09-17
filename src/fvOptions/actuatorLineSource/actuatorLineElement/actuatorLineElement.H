@@ -158,15 +158,17 @@ protected:
         //- Relative flow velocity
         vector relativeVelocity_;
 
-        //- Geometric relative flow velcity
+        //- Geometric relative flow velocity
         vector relativeVelocityGeom_;
 
-        //- Angle of attack (degrees&radians)
+        //- Angle of attack in degrees
         scalar angleOfAttack_;
-        
-	scalar aoaUncorrected;
 
-        scalar angleOfAttackRad ;
+        //- Uncorrected angle of attack in degrees
+        scalar aoaUncorrected;
+
+        //- Angle of attack in radians
+        scalar angleOfAttackRad;
 
         //- Geometric angle of attack (degrees, no flow curvature correction)
         scalar angleOfAttackGeom_;
@@ -177,10 +179,13 @@ protected:
         //- Drag coefficient;
         scalar dragCoefficient_;
         
-	scalar liftCoefficientUncorrected ;
-        scalar dragCoefficientUncorrected ;
-	scalar normalizedLift;
-	scalar normalizedDrag;
+        //- Aerodynamic coefficients before EVM correction
+        scalar liftCoefficientUncorrected;
+        scalar dragCoefficientUncorrected;
+
+        //- Normalized element forces
+        scalar normalizedLift;
+        scalar normalizedDrag;
         //- 1/4 chord moment coefficient
         scalar momentCoefficient_;
 
@@ -439,11 +444,11 @@ public:
             scalar getPrevBladePointPerturbation() const;
 
  
-	   // Return the angle of attack uncorrected 
-	   scalar calcAngleOfAttackUncorrected() ;
-			
-	   // Return the angle of attack uncorrected 
-	   scalar calcAngleOfAttackCorrected() ;	
+            //- Return the uncorrected angle of attack
+            scalar calcAngleOfAttackUncorrected();
+
+            //- Return the EVM-corrected angle of attack
+            scalar calcAngleOfAttackCorrected();
 
 	   vector computeInducedVelocity();
 
@@ -486,10 +491,10 @@ public:
             //- Set dynamic stall active
             void setDynamicStallActive(bool active);
 
-            //- Set dynamic stall active
+            //- Set filtered lifting-line model active
             void setFilteredLiftingLineActive(bool active);
 
-            //- Set dynamic stall active
+            //- Set filtered lifting-line output active
             void setFilteredLiftingLineWriteOutput(bool active);
 
             //- Set omega for flow curvature correction
