@@ -748,10 +748,12 @@ void Foam::fv::axialFlowTurbineALSource::tilt(scalar radians)
         hub_->rotate(origin_, tiltAxis, radians);
     }
 
-    // Warn at startup if tilting places a blade element outside the mesh.
+    // All ranks must participate in the reduction that forms the global mesh
+    // bounds. Only the master rank reports elements outside those bounds.
+    boundBox domainBB(mesh_.points(), true);
+
     if (Pstream::master())
     {
-        boundBox domainBB(mesh_.points(), false);
         forAll(blades_, i)
         {
             forAll(blades_[i].elements(), j)
