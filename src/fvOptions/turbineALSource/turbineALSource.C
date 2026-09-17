@@ -347,8 +347,6 @@ bool Foam::fv::turbineALSource::read(const dictionary& dict)
         coeffs_.lookup("freeStreamVelocity") >> freeStreamVelocity_;
         coeffs_.lookup("tipSpeedRatio") >> meanTSR_;
         coeffs_.lookup("rotorRadius") >> rotorRadius_;
-        //word velEvalType_= coeffs_.lookup("velEvalType");
-        //word forceProjType_= coeffs_.lookup("forceProjType");
         tsrAmplitude_ = coeffs_.lookupOrDefault("tsrAmplitude", 0.0);
         tsrPhase_ = coeffs_.lookupOrDefault("tsrPhase", 0.0);
 

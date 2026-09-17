@@ -65,11 +65,7 @@ void Foam::fv::actuatorLineElement::read()
     dict_.lookup("bladeRadius") >> bladeRadius_;
     dict_.lookup("bladePointRadius") >> bladePointRadius;
     dict_.lookup("numOfElement") >> numOfElement;
-   // dict_.lookup("totalNumberOfElement") >> totalNumberOfElement;
-   
-    //word defaultVelDragCorrType = "none"; 
-    //word velDragCorrType_ = dict_.lookupOrDefault("velDragCorrType", defaultVelDragCorrType);
-    
+
     dict_.lookup("velocitySampleRadius") >> velocitySampleRadius_;
     dict_.lookup("nVelocitySamples") >> nVelocitySamples_;
 
@@ -279,7 +275,6 @@ Foam::vector Foam::fv::actuatorLineElement::calcProjectionEpsilon()
     scalar bladeEpsilonFactor;
     scalar bladeEpsilonFactorChord;
     scalar bladeEpsilonFactorThickness;
-    //Info<< "position:" << position_ << endl; 
     const scalarField& V = mesh_.V();
     label posCellI = findCell(position_);
        
@@ -417,7 +412,6 @@ void Foam::fv::actuatorLineElement::applyForceField
 {
 	// Calculate projection width
 	vector epsilon1 = calcProjectionEpsilon();
-	//Info<< "epsilon: " << epsilon1 << endl;
 	
 	word forceProjType_ ;
 	dict_.lookup("forceProjType") >> forceProjType_; 
@@ -432,10 +426,6 @@ void Foam::fv::actuatorLineElement::applyForceField
 			projectionRadius *= bladeChordMax;
 		}
 		// Apply force to the cells within the element's sphere of influence
-
-
-		//scalar sphereRadius = chordLength_ + projectionRadius;
-	//	sphereRadius = 63.0 + projectionRadius;		
 
 		forAll(mesh_.cells(), cellI)
 		{
@@ -452,98 +442,6 @@ void Foam::fv::actuatorLineElement::applyForceField
 		
 			}
 		}
-	
-	/*	fileName smearing = mesh_.time().path() / "../postProcessing/smearing";
-		
-		if (not isDir(smearing))
-		{
-			mkDir(smearing);
-		}
-		fileName outputFile;
-                outputFile = smearing / (name_+".csv");
-
-		if (not isDir(outputFile))
-		{
-			outputFile = smearing / (name_+".csv");
-			outputForce = new OFstream(outputFile);
-		}
-		
-		bool isFirstWrite = !isFile(outputFile);
-
-		std::ofstream outputForce;
-		if (isFirstWrite)
-		{
-			outputForce.open(outputFile.c_str(), std::ios::out);  
-  			outputForce << "time,root_dist,forcesmearedx,forcesmearedy,forcesmearedz" << std::endl;
-		}
-		else
-		{
-			outputForce.open(outputFile.c_str(), std::ios::app);
-		}
-		
-
-		scalar currentTime = mesh_.time().value();
-
-		volVectorField forceFieldLocal
-		(
-			IOobject
-			(
-				"forceFieldLocal",
-				mesh_.time().timeName(),
-				mesh_,
-				IOobject::NO_READ,
-				IOobject::NO_WRITE
-		),
-		mesh_,
-		dimensionedVector("zero",forceField.dimensions(),vector::zero)
-	);
-
-
-
-		forAll(mesh_.cells(), cellI)
-		{
-			forceFieldLocal[cellI] = vector::zero;
-		}
-
-
-		forAll(mesh_.cells(), cellI)
-		{
-		    
-		    scalar dis = mag(mesh_.C()[cellI] - position_);
-		    if (dis <= sphereRadius) // Only consider cells influenced by the actuator line
-		    {
-			
-                                scalar factor = Foam::exp(-Foam::sqr(dis/epsilon1[0]))
-                                                        / (Foam::pow(epsilon1[0], 3)
-                                                        * Foam::pow(Foam::constant::mathematical::pi, 1.5));
-                                // forceField is opposite forceVector
-                                forceFieldLocal[cellI] += -forceVector_*factor;
-
-	
-	  	    }
-		    
-		}
-
-		vector summedForce = vector::zero;
-
-		forAll(mesh_.cells(), cellI)
-		{
-			summedForce += forceFieldLocal[cellI];
-		}
-		
-		vector globalSummedForce = summedForce;
-		reduce(globalSummedForce, sumOp<vector>());
-
-		if (Pstream::master())
-		{
-
-			outputForce << currentTime << "," << rootDistance_ << ","
-				<< globalSummedForce.x()* Foam::pow(cellLength_,3) << "," << globalSummedForce.y()*Foam::pow(cellLength_,3)
-				<< "," << globalSummedForce.z()*Foam::pow(cellLength_,3) << std::endl;
-		}
-
-		outputForce.close(); */
-
 	}
 
 	
@@ -554,13 +452,6 @@ void Foam::fv::actuatorLineElement::applyForceField
 		scalar epsilonMax = max(epsilon1[0], epsilon1[1]);
 		scalar projectionRadius = (bladeChordMax* epsilonMax * Foam::sqrt(Foam::log(1.0/0.001)));
 		scalar sphereRadius = chordLength_ + projectionRadius;
-
-		//vector sphereRadiusVector = vector(0.0, 0.0, 0.0);
-		//sphereRadiusVector[0] = chordLength_ + projectionRadius;		
-		//sphereRadiusVector[1] = (chordLength_* thickness_)+ projectionRadius;
-		//sphereRadiusVector[2] = spanLength_+ projectionRadius;
-
-		
 		forAll(mesh_.cells(), cellI)
 		{
 			vector disVector = mesh_.C()[cellI] - position_;
@@ -590,11 +481,6 @@ void Foam::fv::actuatorLineElement::applyForceField
 		
 		}
 	}
-	
-/*    if (debug)
-    {
-        Info<< "    sphereRadius: " << sphereRadius << endl;
-    }*/
 }
 
 void Foam::fv::actuatorLineElement::calculateInflowVelocity
@@ -687,13 +573,8 @@ void Foam::fv::actuatorLineElement::calculateInflowVelocity
             cellLengthLocal = cbrt(V[airfoilCellID]);
         }
 
-        // Replacing old reduce logic with guarded values
-        // reduce(cellVelocity, minOp<vector>());
-        // reduce(cellCenterI, minOp<vector>());
-        // reduce(cellLength_, minOp<scalar>());
-
         reduce(airfoilCellID, maxOp<label>());
-        reduce(cellVelocity, minOp<vector>()); // Still may want better logic
+        reduce(cellVelocity, minOp<vector>());
         reduce(cellCenterI, minOp<vector>());
         reduce(cellLengthLocal, minOp<scalar>());
 
@@ -737,7 +618,6 @@ void Foam::fv::actuatorLineElement::calculateInflowVelocity
                     label EVMCellID = findCell(EVMPoint);
                     if (EVMCellID >= 0)
                     {
-                        //velocityEVM += U[EVMCellID];
                         velocityEVM += UInterp.interpolate(EVMPoint, EVMCellID);
                         nSample++;
                     }
@@ -895,7 +775,6 @@ Foam::fv::actuatorLineElement::actuatorLineElement
 {
     meshBoundBox_.inflate(1e-6);
     read();
-    //inflowVelocityGList_.setSize(bladePointRadius.size(), vector::zero);
     setPrevG(0.0);
     setNextG(0.0);
 
@@ -1105,15 +984,6 @@ const Foam::scalar& Foam::fv::actuatorLineElement::rootDistance()
 {
     return rootDistance_;
 }
-
-
-
-/*const Foam::List<scalar>& Foam::fv::actuatorLineElement::getDGList() const
-{
-    return dGList_;
-}*/
-
-
 Foam::scalar Foam::fv::actuatorLineElement::calcAngleOfAttackUncorrected()
 {
     // local angle of attack =  phi - pitch
@@ -1434,8 +1304,6 @@ void Foam::fv::actuatorLineElement::setRelativeVelocityGList
    }
         
 
-   //inflowVelocityGList_[numOfElement] = inflowVelocityG_;
-
     // Calculate relative velocity and Reynolds number
     relativeVelocity_ = inflowVelocityG_ - velocity_;
 
@@ -1448,9 +1316,6 @@ void Foam::fv::actuatorLineElement::setRelativeVelocityGList
    lookupCoefficients(radToDeg(angleOfAttackBeforeInducedVel));
 	
    liftCoefficientG_ = liftCoefficient_;
-   //Info << "liftCoefficientG:" << liftCoefficientG_ << endl;
-   //Info << "liftCoefficientGold:" << prevLiftCoefficientG_ << endl;
-
    if (numOfElement != 0)
    {
         liftCoefficientG_ = (relaxFactorLC * liftCoefficientG_) + ( (1- relaxFactorLC) * prevLiftCoefficientG_);
@@ -1495,7 +1360,6 @@ void Foam::fv::actuatorLineElement::computeDGandAppend()
    {
 	dGList_.clear();
         dGList_.setSize(totNumberOfElement);
-	//prevTime_ = mesh_.time().value();
    }
 
 
@@ -1507,17 +1371,10 @@ void Foam::fv::actuatorLineElement::computeDGandAppend()
    {
         dG = -GPrevTime_;
    }
-   else
-   {
+    else
+    {
         dG = 0.5 * (nextGPrevTime_ - prevGPrevTime_);
-        //Info << "PreviousG:" << prevG_ <<endl;
-        //Info << "NextG:" << nextG_ << endl;
-        //Info << "PreviousGPrevTime:" << prevGPrevTime_ <<endl;
-        //Info << "NextGPrevTime:" << nextGPrevTime_ << endl;
-   }
-
-   //Info << "CurrentG:" << G_ << endl;
-   //Info << "PrevTimeG:" << GPrevTime_ << endl;
+    }
 
    dGList_[numOfElement] = dG;
    
@@ -1575,7 +1432,6 @@ Foam::vector Foam::fv::actuatorLineElement::computeInducedVelocity()
 
    // Vector for the correction is computed 
 
-   //vector notInfluencedVelocityParallelVector = chordDirection_ * inflowVelocity_.x() + planformNormal_ * inflowVelocity_.y();
    vector notInfluencedVelocityParallelVector = relativeVelocityGList_[numOfElement] /  mag(relativeVelocityGList_[numOfElement]);
    vector bladePointPerturbationVector = notInfluencedVelocityParallelVector ^ spanDirection_;
    bladePointPerturbationVector = bladePointPerturbation * bladePointPerturbationVector ; 
@@ -1651,17 +1507,10 @@ void Foam::fv::actuatorLineElement::calculateForce
         Info<< "    planformNormal: " << planformNormal_ << endl;
     }
 
-        // Find local flow velocity by interpolating to element location
-        //calculateInflowVelocity(Uin);
-    
-    //word velEval = dict_.lookup("velEvalType");
-    
     if (filteredLiftingLineActive_)
     {
         vector inducedVelocity = computeInducedVelocity();
-	//Info << "inducedVel:" << inducedVelocity << endl;
         relativeVelocity_ = relativeVelocity_ + inducedVelocity;
-	//Info << "relativeVelocity_:" << relativeVelocity_ << endl;
     }
     else 
     {
@@ -1672,7 +1521,6 @@ void Foam::fv::actuatorLineElement::calculateForce
         vector spanwiseVelocity = spanDirection_
                             * (inflowVelocity_ & spanDirection_)
                             / magSqr(spanDirection_);
-        //Info << "inflowVelocity:" << inflowVelocity_ ;
         inflowVelocity_ -= spanwiseVelocity;
 	// Calculate relative velocity and Reynolds number
 	relativeVelocity_ = inflowVelocity_ - velocity_;
@@ -1695,9 +1543,6 @@ void Foam::fv::actuatorLineElement::calculateForce
     {
 		angleOfAttack_ = aoaUncorrected; // in degrees
     }
-
-
-    //angleOfAttack_ = aoaUncorrected;
 
     Re_ = mag(relativeVelocity_)*chordLength_/nu_;	
     // Calculate geometric angle of attack
@@ -1775,21 +1620,8 @@ void Foam::fv::actuatorLineElement::calculateForce
     liftDirection /= mag(liftDirection);
     vector dragDirection = relativeVelocity_/mag(relativeVelocity_);
     forceVector_ = lift*liftDirection + drag*dragDirection;
-	
-    //Info<< "lift:" << lift << endl;
-    //Info<< "drag:" << drag << endl;
-    //Info<< "force (per unit density):" << forceVector_ << endl;
-    
     normalizedLift = lift / (spanLength_ * 2 * bladeRadius_ * mag(freeStreamVelocity_) * mag(freeStreamVelocity_));
     normalizedDrag = drag / (spanLength_ * 2 * bladeRadius_ * mag(freeStreamVelocity_) * mag(freeStreamVelocity_));	
-
-
-    if (debug)
-    {
-        //Info<< "    liftDirection: " << liftDirection << endl;
-        //Info<< "    dragDirection: " << dragDirection << endl;
-        //Info<< "    force  (per unit density): " << forceVector_ << endl;
-    }
 }
 
 
@@ -1854,7 +1686,6 @@ void Foam::fv::actuatorLineElement::rotate
     // Rotate the span and chord vectors of the element
     chordDirection_ = RM & chordDirection_;
     spanDirection_ = RM & spanDirection_;
-    //Info<< "Chord direction (after pitching RM): " << chordDirection_<< endl;
     // Rotate the element's velocity vector if specified
     if (rotateVelocity)
     {
@@ -2014,27 +1845,12 @@ void Foam::fv::actuatorLineElement::addSup
         )
     );
 
-	/*volScalarField factorFieldI
-	(
-		IOobject
-		(   "gBlade." + name_,
-            mesh_.time().timeName(),
-            mesh_
-        ),
-        mesh_
-    );
-       */ 
     const volVectorField& Uin(eqn.psi());
     calculateForce(Uin);
     applyForceField(forceFieldI);
 
-// Pout<< "Processor" << Pstream::myProcNo() << "forceField:" << forceField << endl;
-
-
     // Add force to total actuator line force
     forceField += forceFieldI;
- 
-	//factorField += factorFieldI;
 	
     // Write performance to file
     if (writePerf_ and Pstream::master())

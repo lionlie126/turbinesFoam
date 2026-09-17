@@ -101,8 +101,8 @@ protected:
 
 
         scalar bladeRadius_;
-        ///// new added//////////////////////
-		// thickness
+
+        //- Airfoil thickness
 		scalar thickness_;
         
         // Cell length 
@@ -115,13 +115,9 @@ protected:
         scalar bladeChordMax;
 
 	scalar prevTime_;
-	//scalar GPrevTime_; 
 
 	scalar nextGPrevTime_;
 	scalar prevGPrevTime_;
-
-	//DynamicList<DynamicList<scalar>> G;
-        /////////////////////////////////
         
         //- Element planform normal vector -- direction when the opposite of
         //  the chord direction is swept into the span direction
@@ -183,8 +179,6 @@ protected:
         
 	scalar liftCoefficientUncorrected ;
         scalar dragCoefficientUncorrected ;
-
-        //vector Umean;
 	scalar normalizedLift;
 	scalar normalizedDrag;
         //- 1/4 chord moment coefficient
@@ -406,12 +400,6 @@ public:
             //- Return drag coefficient
             const scalar& dragCoefficient();
 
-            //- Return lift coefficient
-            //const scalar& normalizedLift();
-            
-            //- Return drag coefficient
-            //const scalar& normalizedDrag();
-            
             //- Return moment coefficient
             const scalar& momentCoefficient();
 
@@ -440,14 +428,12 @@ public:
             //  attack plus twist
             scalar calcInflowRefAngle();
 	    
-            // Return variables needed for filteredLiftingLine Model
+	    // Return variables needed for filteredLiftingLine Model
             scalar computeG();        
 	    scalar getPrevLiftCoefficient() const;
-	    //scalar getG() const;
             
 	    scalar getNextG() const;
 	    scalar getPrevG() const;
-            //scalar getGPrevTime() const;
 	    scalar getNextGPrevTime() const;
 	    scalar getPrevGPrevTime() const;
             scalar getPrevBladePointPerturbation() const;
@@ -519,7 +505,6 @@ public:
             void setNVelocitySamples(label nSamples);
 
 	    //- Set previous G and next G
-            //void setG(scalar G);
 	    void setRelativeVelocityGList(const volVectorField& Uin);
 	    void setPrevG(scalar prevG);
 	    void setNextG(scalar nextG);
@@ -529,7 +514,6 @@ public:
 	    void setPrevBladePointPerturbation(const scalar perturbation);
 
 	    void setPrevLiftCoefficient(const scalar liftcoeff);
-            //void setGPrevTime(scalar GPrevTime);
 
 	    void setNextGPrevTime(scalar nextGPrevTime);
 	    void setPrevGPrevTime(scalar prevGPrevTime); 

@@ -77,9 +77,6 @@ protected:
 
         //- Hub dictionary
         dictionary hubDict_;
-        
-        //dictionary bladeSubDict;
-
         //- Tower definitions dictionary
         dictionary towerDict_;
 

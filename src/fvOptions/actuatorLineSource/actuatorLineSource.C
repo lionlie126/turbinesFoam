@@ -221,12 +221,9 @@ void Foam::fv::actuatorLineSource::createElements()
         Info<< "Tip location: " << tipLocation << endl;
     }
 
-    
-    //List<scalar> bladePointRadius(elements_.size());    
-    //added to store all bladePoint radius
+    // Store radial locations used by the filtered lifting-line model
     forAll(elements_, i)
     {
-	label geoSegmentIndex = i/nElementsPerSegment;
 	label pIndex = i % nElementsPerSegment;
 
 	vector p1 = points[i / nElementsPerSegment];
@@ -251,7 +248,6 @@ void Foam::fv::actuatorLineSource::createElements()
         // Actuator point geometry to be calculated from elementGeometry
         label geometrySegmentIndex = i/nElementsPerSegment;
         label pointIndex = i % nElementsPerSegment;
-        //label elementProfileIndex = i*elementProfiles_.size()/nElements_;
         label profileTypeID;
         vector position;
         scalar chordLength;
@@ -274,10 +270,6 @@ void Foam::fv::actuatorLineSource::createElements()
                  + segment/nElementsPerSegment/2;
         Info<< "position: " << position << endl;
 
-	//scalar posMag = mag(position);
-	//bladePointRadius[i] = posMag;
-
-
         // Linearly interpolate chordLength
         scalar chordLength1 = chordLengths[geometrySegmentIndex];
         scalar chordLength2 = chordLengths[geometrySegmentIndex + 1];
@@ -295,9 +287,6 @@ void Foam::fv::actuatorLineSource::createElements()
                       + deltaSpanTotal/nElementsPerSegment/2;              
         
         spanDirection /= mag(spanDirection);
-        //Info<< "spanDirection: " << spanDirection << endl;
-
-
         // Linearly interpolate section pitch
         scalar pitch1 = pitches[geometrySegmentIndex];
         scalar pitch2 = pitches[geometrySegmentIndex + 1];
@@ -328,8 +317,6 @@ void Foam::fv::actuatorLineSource::createElements()
         chordDirection = chordDir1
                        + deltaChordDirTotal/nElementsPerSegment*pointIndex
                        + deltaChordDirTotal/nElementsPerSegment/2;
-	//Info<< "chordDirection:" << chordDirection << endl;
-
         // Chord reference direction (before pitching)
         chordRefDirection = chordDirection;
         
@@ -355,7 +342,6 @@ void Foam::fv::actuatorLineSource::createElements()
         word profileName = elementProfiles_[profileTypeID];
         
         Info<< "profileTypeID: " << profileTypeID << endl;
-        //Info<< "profileName: " << profileName << endl;
 	word velEval;
 	word forceProj;
 	word gaussRadType;
@@ -392,11 +378,6 @@ void Foam::fv::actuatorLineSource::createElements()
 	dict.add("numOfElement", numOfElement);
 	dict.add("totalNumberOfElement", nElements_);     
         dict.add("bladeChordMax", coeffs_.lookupOrDefault("bladeChordMax", 0.0));
-        //dict.add
-        //(
-		//	"bladeEpsilonFactor",
-         //   coeffs_.lookup("bladeEpsilonFactor")
-        //);
         dict.add
         (
             "velocitySampleRadius",
@@ -445,8 +426,6 @@ void Foam::fv::actuatorLineSource::createElements()
             Info<< "writePerf: " << writeElementPerf << endl;
             Info<< "Root distance (nondimensional): " << rootDistance << endl;
         }
-	//Info << "numOfElement" << numOfElement << endl;
-	//Info << "bladePointRadius" << bladePointRadius << endl; 
         actuatorLineElement* element = new actuatorLineElement
         (
             name, dict, mesh_
@@ -454,8 +433,6 @@ void Foam::fv::actuatorLineSource::createElements()
         elements_.set(i, element);
         pitch = Foam::degToRad(pitch);
         elements_[i].pitch(-pitch); //pitching the elements 
-                 //   Info<< "Chord direction (after pitching): " << chordDirection
-             //   << endl;
         elements_[i].setVelocity(initialVelocity);
 	numOfElement++;
 
@@ -526,8 +503,8 @@ void Foam::fv::actuatorLineSource::calcEndEffects()
     {
         theta[n] = elements_[n].rootDistance()*pi;
         c[n] = elements_[n].chordLength();
-        //~ alpha[n] = Foam::degToRad(elements_[n].angleOfAttackGeom());
-        //~ relVelMag[n] = mag(elements_[n].relativeVelocityGeom());
+        // TODO: populate alpha and relVelMag from the element state before
+        // relying on this end-effects implementation.
     }
 
     // Create D matrix
@@ -622,17 +599,6 @@ Foam::fv::actuatorLineSource::actuatorLineSource
             vector::zero
         )
     ),
-    
- /*   factorField_
-	(
-		IOobject
-		(   "gBlade." + name_,
-            mesh_.time().timeName(),
-            mesh_
-        ),
-        mesh_
-    ),
-    */
     writePerf_(coeffs_.lookupOrDefault("writePerf", false)),
     lastMotionTime_(mesh.time().value()),
     endEffectsActive_(false),
@@ -817,7 +783,6 @@ void Foam::fv::actuatorLineSource::addSup
 
     	forAll(elements_,i)
     	{
-		//elements_[i].setPrevLiftCoefficient(prevliftcoeff);
 		if (mesh_.time().value() != pastTime_)
 		{
 			if (i > 0)

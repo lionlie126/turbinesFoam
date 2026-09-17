@@ -104,9 +104,6 @@ void Foam::fv::axialFlowTurbineALSource::createBlades()
         coeffs_.lookup("gaussianRadiusType") >> gaussRad;
         bladeSubDict.add("gaussianRadiusType", gaussRad);
         bladeSubDict.add("profileData", profileData_);
-     //   bladeSubDict.add("bladeEpsilonFactor", coeffs_.lookup("bladeEpsilonFactor"));
-
-
         // Disable individual lifting line end effects model if rotor-level
         // end effects model is active
         if
@@ -133,7 +130,6 @@ void Foam::fv::axialFlowTurbineALSource::createBlades()
 
         // Convert element data into actuator line element geometry
         label nGeomPoints = elementData.size();
-        //label nGeomPoints = nElements;
         List<List<List<scalar> > > elementGeometry(nGeomPoints);
         List<vector> initialVelocities(nGeomPoints, vector::zero);
         // Frontal area for this blade
@@ -224,7 +220,6 @@ void Foam::fv::axialFlowTurbineALSource::createBlades()
             vector planformNormal = freeStreamDirection_;
             vector spanDirection = chordDirection ^ planformNormal;
             spanDirection /= mag(spanDirection);
-			//Info<< "Creating spanDirection in AxialFlow: " << spanDirection << endl;
             // Rotate span and chord directions according to azimuth
             rotateVector(spanDirection, vector::zero, axis_, azimuthRadians);
             elementGeometry[j][1][0] = spanDirection.x();
@@ -391,7 +386,6 @@ void Foam::fv::axialFlowTurbineALSource::createHub()
     coeffs_.lookup("forceProjType") >> forceProj;
     hubSubDict.add("forceProjType", forceProj);
     hubSubDict.add("profileData", profileData_);
-   // hubSubDict.add("bladeEpsilonFactor", coeffs_.lookup("bladeEpsilonFactor"));
 
     // Do not write force from individual actuator line unless specified
     hubSubDict.lookupOrAddDefault("writeForceField", false);
@@ -495,7 +489,6 @@ void Foam::fv::axialFlowTurbineALSource::createTower()
     coeffs_.lookup("forceProjType") >> forceProj;
     towerSubDict.add("forceProjType", forceProj);
     towerSubDict.add("profileData", profileData_);
-    //towerSubDict.add("bladeEpsilonFactor", coeffs_.lookup("bladeEpsilonFactor"));
 
     // Do not write force from individual actuator line unless specified
     towerSubDict.lookupOrAddDefault("writeForceField", false);
@@ -549,12 +542,10 @@ void Foam::fv::axialFlowTurbineALSource::calcEndEffects()
             {
                 vector elementVelDir = elementVel / mag(elementVel);
                 scalar relVelOpElementVel = -elementVelDir & relVel;
-                //vector rotorPlaneDir = freeStreamDirection_;
                 vector rotorPlaneDir = axis_;
                 scalar relVelRotorPlane = rotorPlaneDir & relVel;
                 // Note: Does not take yaw into account
                 phi = atan2(relVelRotorPlane, relVelOpElementVel);
-                //Info<< "    phi (degrees): " << radToDeg(phi) << endl;
             }
             if (debug)
             {
@@ -573,13 +564,10 @@ void Foam::fv::axialFlowTurbineALSource::calcEndEffects()
                 {
                     scalar acosArg = Foam::exp
                     (
-                        -nBlades_/2.0*(1.0/rootDist - 1)/sin(mag(phi)) //corrected
-                        //-nBlades_/2.0*(1.0/rootDist - 1)/sin(phi)
+                        -nBlades_/2.0*(1.0/rootDist - 1)/sin(mag(phi))
                     );
-                   // Info<< "    acosArg: " << acosArg << endl;
 
                     f = 2.0/pi*acos(min(1.0, acosArg));
-                   // Info<< "    EndEffectFactor: " << f << endl;
                 }
                 if (endEffectsCoeffs.lookupOrDefault("rootEffects", false))
                 {
@@ -671,8 +659,6 @@ Foam::fv::axialFlowTurbineALSource::axialFlowTurbineALSource
     yaw(degToRad(yawAngle));
     scalar tiltAngle = coeffs_.lookupOrDefault("tiltAngle", 0.0);
     tilt(degToRad(tiltAngle));
-//	Info<< "axialFlowTurbineALSource created at time not function = " << tiltAngle  << endl;
-	//Info<< "chordDirection after tilting " << chordDirection  << endl;
     if (debug)
     {
         Info<< "axialFlowTurbineALSource created at time = " << time_.value()

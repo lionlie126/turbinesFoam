@@ -86,23 +86,11 @@ protected:
         //- Free stream direction
         vector freeStreamDirection_;
         
-        //velocity evaluation type
-        //word velEval;
-
-		// force Projection Type
-		//word forceProj;
-		
-		//maximum chord length 
-		//scalar bladeChordMax ;
-		
         //- Total force vector from all elements
         vector force_;
 
         //- Force field from all elements
         volVectorField forceField_;
-        
-        //volScalarField factorField_;
-
         //- List of actuator line elements
         PtrList<actuatorLineElement> elements_;
 
