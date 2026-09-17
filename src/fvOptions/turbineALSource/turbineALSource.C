@@ -149,6 +149,26 @@ void Foam::fv::turbineALSource::updateTSROmega()
 }
 
 
+void Foam::fv::turbineALSource::updateRestartState()
+{
+    state_.set("angleDeg", angleDeg_);
+    state_.set("checkpointTime", time_.value());
+}
+
+
+Foam::scalar Foam::fv::turbineALSource::wrappedAngleDeg() const
+{
+    scalar angle = fmod(angleDeg_, 360.0);
+
+    if (angle < 0.0)
+    {
+        angle += 360.0;
+    }
+
+    return angle;
+}
+
+
 void Foam::fv::turbineALSource::rotate()
 {
     scalar deltaT = time_.deltaT().value();
@@ -156,6 +176,7 @@ void Foam::fv::turbineALSource::rotate()
     rotate(radians);
     angleDeg_ += radToDeg(radians);
     lastRotationTime_ = time_.value();
+    updateRestartState();
     updateTSROmega();
 }
 
@@ -190,10 +211,23 @@ Foam::fv::turbineALSource::turbineALSource
 :
     cellSetOption(name, modelType, dict, mesh),
     time_(mesh.time()),
+    state_
+    (
+        IOobject
+        (
+            name + "State",
+            time_.timeName(),
+            "uniform",
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        )
+    ),
+    azimuthStateInitialized_(false),
     lastRotationTime_(time_.value()),
     rhoRef_(1.0),
     omega_(0.0),
-    angleDeg_(0.0),
+    angleDeg_(state_.lookupOrDefault<scalar>("angleDeg", 0.0)),
     nBlades_(0),
     freeStreamVelocity_(vector::zero),
     forceField_
@@ -317,6 +351,38 @@ bool Foam::fv::turbineALSource::read(const dictionary& dict)
         //word forceProjType_= coeffs_.lookup("forceProjType");
         tsrAmplitude_ = coeffs_.lookupOrDefault("tsrAmplitude", 0.0);
         tsrPhase_ = coeffs_.lookupOrDefault("tsrPhase", 0.0);
+
+        // Initialize azimuth only once. Runtime dictionary re-reads must not
+        // overwrite the angle accumulated during the simulation.
+        if (!azimuthStateInitialized_)
+        {
+            if (state_.found("angleDeg"))
+            {
+                Info<< "Restored azimuthal rotation of " << name_ << ": "
+                    << angleDeg_ << " degrees" << endl;
+            }
+            else
+            {
+                angleDeg_ = coeffs_.lookupOrDefault<scalar>
+                (
+                    "restartAngleDeg",
+                    0.0
+                );
+
+                if (mag(time_.value()) > SMALL)
+                {
+                    WarningInFunction
+                        << "No saved azimuth state was found for " << name_
+                        << " at time " << time_.value() << ". Using "
+                        << angleDeg_ << " degrees. For legacy restarts, set "
+                        << "restartAngleDeg in the turbine coefficients."
+                        << endl;
+                }
+            }
+
+            azimuthStateInitialized_ = true;
+            updateRestartState();
+        }
 
         // Get blade information
         bladesDict_ = coeffs_.subDict("blades");

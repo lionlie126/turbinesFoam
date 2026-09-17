@@ -662,9 +662,9 @@ Foam::fv::axialFlowTurbineALSource::axialFlowTurbineALSource
     }
     createOutputFile();
 
-    // Rotate turbine to azimuthalOffset if necessary
+    // Restore the rotor position relative to its configured initial offset
     scalar azimuthalOffset = coeffs_.lookupOrDefault("azimuthalOffset", 0.0);
-    rotate(degToRad(azimuthalOffset));
+    rotate(degToRad(azimuthalOffset + wrappedAngleDeg()));
 
     // Yaw turbine to a static value if specified
     scalar yawAngle = coeffs_.lookupOrDefault("yawAngle", 0.0);

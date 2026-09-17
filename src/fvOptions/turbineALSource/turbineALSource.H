@@ -38,6 +38,7 @@ SourceFiles
 #include "cellSetOption.H"
 #include "NamedEnum.H"
 #include "actuatorLineSource.H"
+#include "IOdictionary.H"
 #include "volFieldsFwd.H"
 #include "OFstream.H"
 
@@ -63,6 +64,12 @@ protected:
 
         //- Runtime pointer
         const Time& time_;
+
+        //- Restart state written in each OpenFOAM output-time directory
+        IOdictionary state_;
+
+        //- True after the saved or configured initial angle has been applied
+        bool azimuthStateInitialized_;
 
         //- Time value used to determine whether to rotate
         scalar lastRotationTime_;
@@ -175,6 +182,12 @@ protected:
 
         //- Update tip speed ratio and angular velocity
         virtual void updateTSROmega();
+
+        //- Synchronize the persistent restart state with the current angle
+        void updateRestartState();
+
+        //- Current cumulative rotation wrapped to [0, 360) degrees
+        scalar wrappedAngleDeg() const;
 
         //- Rotate the turbine according to its angular velocity and time step
         virtual void rotate();

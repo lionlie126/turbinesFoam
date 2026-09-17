@@ -509,9 +509,9 @@ Foam::fv::crossFlowTurbineALSource::crossFlowTurbineALSource
     }
     createOutputFile();
 
-    // Rotate turbine to azimuthalOffset if necessary
+    // Restore the rotor position relative to its configured initial offset
     scalar azimuthalOffset = coeffs_.lookupOrDefault("azimuthalOffset", 0.0);
-    rotate(degToRad(azimuthalOffset));
+    rotate(degToRad(azimuthalOffset + wrappedAngleDeg()));
 
     if (debug)
     {

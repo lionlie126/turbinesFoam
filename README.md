@@ -38,6 +38,24 @@ cd turbinesFoam
 
 See the tutorials located in the `tutorials` directory.
 
+### Restarting turbine simulations
+
+Each turbine writes its cumulative azimuthal rotation to
+`<time>/uniform/<turbineName>State` at normal OpenFOAM write times. When a
+simulation restarts from that time directory, the turbine reads this state and
+reconstructs the saved rotor position relative to its configured
+`azimuthalOffset`.
+
+For a legacy restart directory without a state file, the cumulative rotation
+can be supplied manually in the turbine coefficients:
+
+```foam
+restartAngleDeg  1234.5;
+```
+
+Without saved state or `restartAngleDeg`, a nonzero-time restart emits a
+warning and uses zero cumulative rotation, matching the previous behavior.
+
 ## Contributing
 
 Pull requests are very welcome!
