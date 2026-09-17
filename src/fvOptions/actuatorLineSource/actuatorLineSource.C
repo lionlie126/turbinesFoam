@@ -65,16 +65,18 @@ bool Foam::fv::actuatorLineSource::read(const dictionary& dict)
         coeffs_.lookup("elementGeometry") >> elementGeometry_;
         coeffs_.lookup("nElements") >> nElements_;
         coeffs_.lookup("freeStreamVelocity") >> freeStreamVelocity_;
+        
         freeStreamDirection_ = freeStreamVelocity_/mag(freeStreamVelocity_);
         endEffectsActive_ = coeffs_.lookupOrDefault("endEffects", false);
-
+		
         // Read harmonic pitching parameters if present
         dictionary pitchDict = coeffs_.subOrEmptyDict("harmonicPitching");
         harmonicPitchingActive_ = pitchDict.lookupOrDefault("active", false);
         reducedFreq_ = pitchDict.lookupOrDefault("reducedFreq", 0.0);
         pitchAmplitude_ = pitchDict.lookupOrDefault("amplitude", 0.0);
 
-        // Read option for writing forceField
+	 numOfElement = 0;
+     	// Read option for writing forceField
         bool writeForceField = coeffs_.lookupOrDefault
         (
             "writeForceField",
@@ -149,9 +151,13 @@ void Foam::fv::actuatorLineSource::createElements()
     List<vector> chordRefDirs(nGeometryPoints);
     List<scalar> pitches(nGeometryPoints);
     List<scalar> chordMounts(nGeometryPoints);
+    List<scalar> thicknesses(nGeometryPoints);
+    List<scalar> profileTypeIDs(nGeometryPoints);
+    List<scalar> bladePointRadius(nElements_);
+    
     totalLength_ = 0.0;
     chordLength_ = 0.0;
-
+	
     forAll(points, i)
     {
         // Extract geometry point
@@ -181,6 +187,10 @@ void Foam::fv::actuatorLineSource::createElements()
         chordMounts[i] = elementGeometry_[i][4][0];
         // Read pitch
         pitches[i] = elementGeometry_[i][5][0];
+        //Read thickness 
+        thicknesses[i] = elementGeometry_[i][6][0];
+        //Read profileTypeIDs
+        profileTypeIDs[i] = elementGeometry_[i][7][0];
     }
 
     // Store blade root and tip locations for distance calculations
@@ -196,7 +206,7 @@ void Foam::fv::actuatorLineSource::createElements()
     // Lookup initial element velocities if present
     List<vector> initialVelocities(nGeometryPoints, vector::zero);
     coeffs_.readIfPresent("initialVelocities", initialVelocities);
-
+	
     if (debug)
     {
         Info<< "Total length: " << totalLength_ << endl;
@@ -211,6 +221,26 @@ void Foam::fv::actuatorLineSource::createElements()
         Info<< "Tip location: " << tipLocation << endl;
     }
 
+    
+    //List<scalar> bladePointRadius(elements_.size());    
+    //added to store all bladePoint radius
+    forAll(elements_, i)
+    {
+	label geoSegmentIndex = i/nElementsPerSegment;
+	label pIndex = i % nElementsPerSegment;
+
+	vector p1 = points[i / nElementsPerSegment];
+	vector p2 = points[i / nElementsPerSegment + 1];
+	vector seg = p2 - p1;
+
+	vector pos = p1
+		   + seg / nElementsPerSegment * pIndex
+		   + seg / nElementsPerSegment/2;
+
+	bladePointRadius[i] = mag(pos);
+    }
+
+
     forAll(elements_, i)
     {
         std::stringstream ss;
@@ -221,8 +251,8 @@ void Foam::fv::actuatorLineSource::createElements()
         // Actuator point geometry to be calculated from elementGeometry
         label geometrySegmentIndex = i/nElementsPerSegment;
         label pointIndex = i % nElementsPerSegment;
-        label elementProfileIndex = i*elementProfiles_.size()/nElements_;
-        word profileName = elementProfiles_[elementProfileIndex];
+        //label elementProfileIndex = i*elementProfiles_.size()/nElements_;
+        label profileTypeID;
         vector position;
         scalar chordLength;
         vector chordDirection;
@@ -233,6 +263,7 @@ void Foam::fv::actuatorLineSource::createElements()
         scalar pitch;
         scalar chordMount;
         vector initialVelocity;
+        scalar thickness;
 
         // Linearly interpolate position
         vector point1 = points[geometrySegmentIndex];
@@ -241,6 +272,11 @@ void Foam::fv::actuatorLineSource::createElements()
         position = point1
                  + segment/nElementsPerSegment*pointIndex
                  + segment/nElementsPerSegment/2;
+        Info<< "position: " << position << endl;
+
+	//scalar posMag = mag(position);
+	//bladePointRadius[i] = posMag;
+
 
         // Linearly interpolate chordLength
         scalar chordLength1 = chordLengths[geometrySegmentIndex];
@@ -256,7 +292,11 @@ void Foam::fv::actuatorLineSource::createElements()
         vector deltaSpanTotal = spanDir2 - spanDir1;
         spanDirection = spanDir1
                       + deltaSpanTotal/nElementsPerSegment*pointIndex
-                      + deltaSpanTotal/nElementsPerSegment/2;
+                      + deltaSpanTotal/nElementsPerSegment/2;              
+        
+        spanDirection /= mag(spanDirection);
+        //Info<< "spanDirection: " << spanDirection << endl;
+
 
         // Linearly interpolate section pitch
         scalar pitch1 = pitches[geometrySegmentIndex];
@@ -288,16 +328,47 @@ void Foam::fv::actuatorLineSource::createElements()
         chordDirection = chordDir1
                        + deltaChordDirTotal/nElementsPerSegment*pointIndex
                        + deltaChordDirTotal/nElementsPerSegment/2;
+	//Info<< "chordDirection:" << chordDirection << endl;
 
         // Chord reference direction (before pitching)
         chordRefDirection = chordDirection;
         
         // Calculate nondimensional root distance
         scalar rootDistance = mag(position - rootLocation)/totalLength_;
+        
+        // Linearly interpolate thickness
+        scalar thickness1 = thicknesses[geometrySegmentIndex];
+        scalar thickness2 = thicknesses[geometrySegmentIndex + 1];
+        scalar deltaThicknessTotal = thickness2 - thickness1;
+        thickness = thickness1
+                       + deltaThicknessTotal/nElementsPerSegment*pointIndex
+                       + deltaThicknessTotal/nElementsPerSegment/2;
+                       
+        // Linearly interpolate airfoilTypeID
+        label profileTypeID1 = profileTypeIDs[geometrySegmentIndex];
+        label profileTypeID2 = profileTypeIDs[geometrySegmentIndex + 1];
+        scalar deltaProfileTypeIDTotal = profileTypeID2 - profileTypeID1 ;
+        profileTypeID = profileTypeID1
+                       + deltaProfileTypeIDTotal/nElementsPerSegment*pointIndex
+                       + deltaProfileTypeIDTotal/nElementsPerSegment/2;
+        
+        word profileName = elementProfiles_[profileTypeID];
+        
+        Info<< "profileTypeID: " << profileTypeID << endl;
+        //Info<< "profileName: " << profileName << endl;
+	word velEval;
+	word forceProj;
+	word gaussRadType;
 
+        coeffs_.lookup("velEvalType") >> velEval;
+        coeffs_.lookup("forceProjType") >> forceProj;
+        coeffs_.lookup("gaussianRadiusType") >> gaussRadType;
+ 
+        
         // Create a dictionary for this actuatorLineElement
         dictionary dict;
         dict.add("position", position);
+	dict.add("bladePointRadius", bladePointRadius);
         dictionary profileDataDict = profileData_.subDict(profileName);
         dict.add("profileData", profileDataDict);
         dict.add("profileName", profileName);
@@ -306,14 +377,30 @@ void Foam::fv::actuatorLineSource::createElements()
         dict.add("chordRefDirection", chordRefDirection);
         dict.add("spanLength", spanLength);
         dict.add("spanDirection", spanDirection);
+        dict.add("thickness", thickness);
+        dict.add("bladeElementPitch", pitch);
         dict.add("freeStreamVelocity", freeStreamVelocity_);
         dict.add("chordMount", chordMount);
         dict.add("rootDistance", rootDistance);
         dict.add("addedMass", coeffs_.lookupOrDefault("addedMass", false));
+        dict.add("velEvalType", velEval);
+        dict.add("forceProjType", forceProj);
+        dict.add("aspectRatio", aspectRatio_);
+        dict.add("averageChordLength", chordLength_);        
+        dict.add("gaussianRadiusType", gaussRadType);
+	dict.add("bladeRadius", coeffs_.lookup("bladeRadius"));
+	dict.add("numOfElement", numOfElement);
+	dict.add("totalNumberOfElement", nElements_);     
+        dict.add("bladeChordMax", coeffs_.lookupOrDefault("bladeChordMax", 0.0));
+        //dict.add
+        //(
+		//	"bladeEpsilonFactor",
+         //   coeffs_.lookup("bladeEpsilonFactor")
+        //);
         dict.add
         (
             "velocitySampleRadius",
-            coeffs_.lookupOrDefault("velocitySampleRadius", 0.0)
+            coeffs_.lookupOrDefault("velocitySampleRadius", 1.0)
         );
         dict.add
         (
@@ -323,9 +410,17 @@ void Foam::fv::actuatorLineSource::createElements()
         if (coeffs_.found("dynamicStall"))
         {
             dictionary dsDict = coeffs_.subDict("dynamicStall");
-            dsDict.add("chordLength", chordLength);
-            dict.add("dynamicStall", dsDict);
+            dsDict.add("chordLength", chordLength); 
+	    dict.add("dynamicStall", dsDict);
         }
+
+	if (coeffs_.found("filteredLiftingLine"))
+	{
+	    dictionary fllDict = coeffs_.subDict("filteredLiftingLine");
+	    dict.add("filteredLiftingLine", fllDict);
+	    fllActive_ = fllDict.lookupOrDefault("active", false);
+	}
+
         dictionary fcDict = coeffs_.subOrEmptyDict("flowCurvature");
         dict.add("flowCurvature", fcDict);
         bool writeElementPerf
@@ -345,20 +440,25 @@ void Foam::fv::actuatorLineSource::createElements()
             Info<< "Pitch (degrees): " << pitch << endl;
             Info<< "Span length: " << spanLength << endl;
             Info<< "Span direction: " << spanDirection << endl;
-            Info<< "Profile name index: " << elementProfileIndex << endl;
+            Info<< "Profile name index: " << profileTypeID << endl;
             Info<< "Profile name: " << profileName << endl;
             Info<< "writePerf: " << writeElementPerf << endl;
             Info<< "Root distance (nondimensional): " << rootDistance << endl;
         }
-
+	//Info << "numOfElement" << numOfElement << endl;
+	//Info << "bladePointRadius" << bladePointRadius << endl; 
         actuatorLineElement* element = new actuatorLineElement
         (
             name, dict, mesh_
         );
         elements_.set(i, element);
         pitch = Foam::degToRad(pitch);
-        elements_[i].pitch(pitch);
+        elements_[i].pitch(-pitch); //pitching the elements 
+                 //   Info<< "Chord direction (after pitching): " << chordDirection
+             //   << endl;
         elements_[i].setVelocity(initialVelocity);
+	numOfElement++;
+
     }
 }
 
@@ -522,9 +622,21 @@ Foam::fv::actuatorLineSource::actuatorLineSource
             vector::zero
         )
     ),
+    
+ /*   factorField_
+	(
+		IOobject
+		(   "gBlade." + name_,
+            mesh_.time().timeName(),
+            mesh_
+        ),
+        mesh_
+    ),
+    */
     writePerf_(coeffs_.lookupOrDefault("writePerf", false)),
     lastMotionTime_(mesh.time().value()),
-    endEffectsActive_(false)
+    endEffectsActive_(false),
+    pastTime_(mesh_.time().value())
 {
     read(dict_);
     createElements();
@@ -689,11 +801,69 @@ void Foam::fv::actuatorLineSource::addSup
 
     // Zero the total force vector
     force_ = vector::zero;
+           
+    const volVectorField& Uin = mesh_.lookupObject<volVectorField>("U");
+    
+    if (fllActive_)
+    {
+    	scalar prevliftcoeff = 0.0;
+   
+    	forAll(elements_, i)
+    	{
+        	elements_[i].setPrevLiftCoefficient(prevliftcoeff);
+		elements_[i].setRelativeVelocityGList(Uin);
+		prevliftcoeff = elements_[i].getPrevLiftCoefficient();
+    	}
+
+    	forAll(elements_,i)
+    	{
+		//elements_[i].setPrevLiftCoefficient(prevliftcoeff);
+		if (mesh_.time().value() != pastTime_)
+		{
+			if (i > 0)
+			{
+                     	             
+		     		elements_[i].setNextGPrevTime(elements_[i].getNextG());
+	             		elements_[i].setPrevGPrevTime(elements_[i].getPrevG());	
+			}
+		}
+
+		if (i > 0)
+        	{
+             		elements_[i-1].setNextG(elements_[i].computeG());
+             		elements_[i].setPrevG(elements_[i-1].computeG());
+        	}
+
+	
+    	}
+
+    	pastTime_ = mesh_.time().value();
+
+
+    	forAll(elements_, i)
+    	{
+		elements_[i].computeDGandAppend();
+    	}
+    }
+   
+    scalar prevPerturbation = 0.0;
 
     forAll(elements_, i)
     {
-        elements_[i].addSup(eqn, forceField_);
-        force_ += elements_[i].force();
+	if (fllActive_)
+	{
+		elements_[i].setPrevBladePointPerturbation(prevPerturbation);
+        }
+	
+	elements_[i].addSup(eqn, forceField_);
+        
+	if (fllActive_)
+	{
+		prevPerturbation = elements_[i].getPrevBladePointPerturbation();
+	}
+
+	force_ += elements_[i].force();
+	
     }
 
     Info<< "Force (per unit density) on " << name_ << ": "

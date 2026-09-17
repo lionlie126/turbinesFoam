@@ -66,9 +66,6 @@ void Foam::fv::axialFlowTurbineALSource::createCoordinateSystem()
     // Calculate initial azimuthal or tangential direction
     azimuthalDirection_ = axis_ ^ verticalDirection_;
     azimuthalDirection_ /= mag(azimuthalDirection_);
-
-    // Axis of rotation for tilting the turbine
-    tiltAxis_ = azimuthalDirection_;
 }
 
 
@@ -80,8 +77,6 @@ void Foam::fv::axialFlowTurbineALSource::createBlades()
     List<List<scalar> > elementData;
     word modelType = "actuatorLineSource";
     List<scalar> frontalAreas(nBlades); // frontal area from each blade
-    scalar coneAngleDegrees = coeffs_.lookupOrDefault("coneAngle", 0.0);
-    scalar coneAngleRadians = degToRad(coneAngleDegrees);
 
     for (int i = 0; i < nBlades_; i++)
     {
@@ -98,7 +93,19 @@ void Foam::fv::axialFlowTurbineALSource::createBlades()
 
         bladeSubDict.add("freeStreamVelocity", freeStreamVelocity_);
         bladeSubDict.add("fieldNames", coeffs_.lookup("fieldNames"));
+        word velEval;
+	word forceProj;
+	word gaussRad;
+
+	coeffs_.lookup("velEvalType") >> velEval;
+        bladeSubDict.add("velEvalType", velEval);
+        coeffs_.lookup("forceProjType") >> forceProj;
+        bladeSubDict.add("forceProjType", forceProj);
+        coeffs_.lookup("gaussianRadiusType") >> gaussRad;
+        bladeSubDict.add("gaussianRadiusType", gaussRad);
         bladeSubDict.add("profileData", profileData_);
+     //   bladeSubDict.add("bladeEpsilonFactor", coeffs_.lookup("bladeEpsilonFactor"));
+
 
         // Disable individual lifting line end effects model if rotor-level
         // end effects model is active
@@ -126,11 +133,13 @@ void Foam::fv::axialFlowTurbineALSource::createBlades()
 
         // Convert element data into actuator line element geometry
         label nGeomPoints = elementData.size();
+        //label nGeomPoints = nElements;
         List<List<List<scalar> > > elementGeometry(nGeomPoints);
         List<vector> initialVelocities(nGeomPoints, vector::zero);
         // Frontal area for this blade
         scalar frontalArea = 0.0;
         scalar maxRadius = 0.0;
+        scalar bladeChordMax = VSMALL; 
         forAll(elementData, j)
         {
             // Read AFTAL dict element data
@@ -141,27 +150,45 @@ void Foam::fv::axialFlowTurbineALSource::createBlades()
             scalar chordLength = elementData[j][3];
             scalar chordMount = elementData[j][4];
             scalar pitch = elementData[j][5];
-
+			scalar thickness = elementData[j][6];
+			scalar profileTypeID = elementData[j][7];
+			
             // Find max radius for calculating frontal area
             if (radius > maxRadius)
             {
                 maxRadius = radius;
             }
+            
+            //Find max chord length to use for Projection Radius in ActuatorLineElement
+            if (chordLength > bladeChordMax)
+            {
+				bladeChordMax = chordLength ;
+			}
 
             // Set sizes for actuatorLineSource elementGeometry lists
-            elementGeometry[j].setSize(6);
+            elementGeometry[j].setSize(8);
             elementGeometry[j][0].setSize(3);
             elementGeometry[j][1].setSize(3);
             elementGeometry[j][2].setSize(1);
             elementGeometry[j][3].setSize(3);
             elementGeometry[j][4].setSize(1);
             elementGeometry[j][5].setSize(1);
+            elementGeometry[j][6].setSize(1);
+            elementGeometry[j][7].setSize(1);
 
             // Create geometry point for AL source at origin
             vector point = origin_;
-            // Move point along axial direction
-            point += axialDistance*axis_;
-            // Move along radial direction
+            // Move point along axial direction (as intended)
+            if (axis_ == vector(-1,0,0))
+            {
+				point += axialDistance*axis_;
+			}
+			else if (axis_ == vector(1,0,0))
+			{
+				point += -axialDistance*axis_;
+			}
+            Info<< "point: " << point << endl;
+// Move along radial direction
             point += radius*radialDirection_;
             // Move along chord according to chordMount
             scalar chordDisplacement = (chordMount - 0.25)*chordLength;
@@ -173,16 +200,6 @@ void Foam::fv::axialFlowTurbineALSource::createBlades()
             scalar velAngle = atan2(((chordMount - 0.25)*chordLength), radius);
             rotateVector(initialVelocity, vector::zero, axis_, velAngle);
             initialVelocities[j] = initialVelocity;
-            
-            // Cone point towards positive axis direction according to the
-            // cone angle
-            rotateVector
-            (
-                point,
-                origin_,
-                azimuthalDirection_,
-                -coneAngleRadians
-            );
             // Rotate point and initial velocity according to azimuth value
             rotateVector(point, origin_, axis_, azimuthRadians);
             rotateVector
@@ -207,16 +224,7 @@ void Foam::fv::axialFlowTurbineALSource::createBlades()
             vector planformNormal = freeStreamDirection_;
             vector spanDirection = chordDirection ^ planformNormal;
             spanDirection /= mag(spanDirection);
-
-            // Cone span towards positive axis direction according to the
-            // cone angle
-            rotateVector
-            (
-                spanDirection,
-                vector::zero,
-                azimuthalDirection_,
-                -coneAngleRadians
-            );
+			//Info<< "Creating spanDirection in AxialFlow: " << spanDirection << endl;
             // Rotate span and chord directions according to azimuth
             rotateVector(spanDirection, vector::zero, axis_, azimuthRadians);
             elementGeometry[j][1][0] = spanDirection.x();
@@ -235,6 +243,13 @@ void Foam::fv::axialFlowTurbineALSource::createBlades()
 
             // Set element pitch or twist
             elementGeometry[j][5][0] = pitch;
+            
+            //Set element thickness
+            elementGeometry[j][6][0] = thickness;
+            
+            //Set element profileTypeID
+            elementGeometry[j][7][0] = profileTypeID;
+            
         }
 
         // Add frontal area to list
@@ -252,6 +267,9 @@ void Foam::fv::axialFlowTurbineALSource::createBlades()
         bladeSubDict.add("elementGeometry", elementGeometry);
         bladeSubDict.add("initialVelocities", initialVelocities);
         bladeSubDict.add("dynamicStall", dynamicStallDict_);
+        bladeSubDict.add("filteredLiftingLine", filteredLiftingLineDict_);
+	bladeSubDict.add("bladeChordMax", bladeChordMax);
+	bladeSubDict.add("bladeRadius", rotorRadius_);
         bladeSubDict.add
         (
             "velocitySampleRadius",
@@ -267,7 +285,6 @@ void Foam::fv::axialFlowTurbineALSource::createBlades()
 
         // Do not write force from individual actuator line unless specified
         bladeSubDict.lookupOrAddDefault("writeForceField", false);
-
         dictionary dict;
         dict.add("actuatorLineSourceCoeffs", bladeSubDict);
         dict.add("type", "actuatorLineSource");
@@ -313,13 +330,15 @@ void Foam::fv::axialFlowTurbineALSource::createHub()
         scalar diameter = elementData[j][2];
 
         // Set sizes for actuatorLineSource elementGeometry lists
-        elementGeometry[j].setSize(6);
+        elementGeometry[j].setSize(8);
         elementGeometry[j][0].setSize(3);
         elementGeometry[j][1].setSize(3);
         elementGeometry[j][2].setSize(1);
         elementGeometry[j][3].setSize(3);
         elementGeometry[j][4].setSize(1);
         elementGeometry[j][5].setSize(1);
+        elementGeometry[j][6].setSize(1);
+        elementGeometry[j][7].setSize(1);
 
         // Create geometry point for AL source at origin
         vector point = origin_;
@@ -350,6 +369,12 @@ void Foam::fv::axialFlowTurbineALSource::createHub()
 
         // Set pitch
         elementGeometry[j][5][0] = 0.0;
+        
+        //Set thickness
+        elementGeometry[j][6][0] = 0.0;
+        
+        //Set profile type 
+        elementGeometry[j][7][0] = 0.0;
     }
 
     hubSubDict.add("elementGeometry", elementGeometry);
@@ -359,6 +384,14 @@ void Foam::fv::axialFlowTurbineALSource::createHub()
     hubSubDict.add("freeStreamVelocity", freeStreamVelocity_);
     hubSubDict.add("selectionMode", coeffs_.lookup("selectionMode"));
     hubSubDict.add("cellSet", coeffs_.lookup("cellSet"));
+    word velEval;
+    coeffs_.lookup("velEvalType") >> velEval;
+    hubSubDict.add("velEvalType", velEval);
+    word forceProj;
+    coeffs_.lookup("forceProjType") >> forceProj;
+    hubSubDict.add("forceProjType", forceProj);
+    hubSubDict.add("profileData", profileData_);
+   // hubSubDict.add("bladeEpsilonFactor", coeffs_.lookup("bladeEpsilonFactor"));
 
     // Do not write force from individual actuator line unless specified
     hubSubDict.lookupOrAddDefault("writeForceField", false);
@@ -401,13 +434,15 @@ void Foam::fv::axialFlowTurbineALSource::createTower()
         scalar diameter = elementData[j][2];
 
         // Set sizes for actuatorLineSource elementGeometry lists
-        elementGeometry[j].setSize(6);
+        elementGeometry[j].setSize(8);
         elementGeometry[j][0].setSize(3);
         elementGeometry[j][1].setSize(3);
         elementGeometry[j][2].setSize(1);
         elementGeometry[j][3].setSize(3);
         elementGeometry[j][4].setSize(1);
         elementGeometry[j][5].setSize(1);
+        elementGeometry[j][6].setSize(1);
+        elementGeometry[j][7].setSize(1);
 
         // Create geometry point for AL source at origin
         vector point = origin_;
@@ -438,6 +473,12 @@ void Foam::fv::axialFlowTurbineALSource::createTower()
 
         // Set pitch
         elementGeometry[j][5][0] = 0.0;
+		
+		//Set thickness
+        elementGeometry[j][6][0] = 0.0;
+        
+        //Set profile type 
+        elementGeometry[j][7][0] = 0.0;
     }
 
     towerSubDict.add("elementGeometry", elementGeometry);
@@ -447,6 +488,14 @@ void Foam::fv::axialFlowTurbineALSource::createTower()
     towerSubDict.add("freeStreamVelocity", freeStreamVelocity_);
     towerSubDict.add("selectionMode", coeffs_.lookup("selectionMode"));
     towerSubDict.add("cellSet", coeffs_.lookup("cellSet"));
+    word velEval;
+    coeffs_.lookup("velEvalType") >> velEval;
+    towerSubDict.add("velEvalType", velEval);
+    word forceProj;
+    coeffs_.lookup("forceProjType") >> forceProj;
+    towerSubDict.add("forceProjType", forceProj);
+    towerSubDict.add("profileData", profileData_);
+    //towerSubDict.add("bladeEpsilonFactor", coeffs_.lookup("bladeEpsilonFactor"));
 
     // Do not write force from individual actuator line unless specified
     towerSubDict.lookupOrAddDefault("writeForceField", false);
@@ -500,15 +549,12 @@ void Foam::fv::axialFlowTurbineALSource::calcEndEffects()
             {
                 vector elementVelDir = elementVel / mag(elementVel);
                 scalar relVelOpElementVel = -elementVelDir & relVel;
+                //vector rotorPlaneDir = freeStreamDirection_;
                 vector rotorPlaneDir = axis_;
-                if ((freeStreamDirection_ & axis_) < 0)
-                {
-                    // Rotor plane normal should point in same direction
-                    // as free stream velocity
-                    rotorPlaneDir = -rotorPlaneDir;
-                }
                 scalar relVelRotorPlane = rotorPlaneDir & relVel;
+                // Note: Does not take yaw into account
                 phi = atan2(relVelRotorPlane, relVelOpElementVel);
+                //Info<< "    phi (degrees): " << radToDeg(phi) << endl;
             }
             if (debug)
             {
@@ -527,16 +573,20 @@ void Foam::fv::axialFlowTurbineALSource::calcEndEffects()
                 {
                     scalar acosArg = Foam::exp
                     (
-                        -nBlades_/2.0*(1.0/rootDist - 1)/sin(phi)
+                        -nBlades_/2.0*(1.0/rootDist - 1)/sin(mag(phi)) //corrected
+                        //-nBlades_/2.0*(1.0/rootDist - 1)/sin(phi)
                     );
+                   // Info<< "    acosArg: " << acosArg << endl;
+
                     f = 2.0/pi*acos(min(1.0, acosArg));
+                   // Info<< "    EndEffectFactor: " << f << endl;
                 }
                 if (endEffectsCoeffs.lookupOrDefault("rootEffects", false))
                 {
                     scalar tipDist = 1.0 - rootDist;
                     scalar acosArg = Foam::exp
                     (
-                        -nBlades_/2.0*(1.0/tipDist - 1)/sin(phi)
+                        -nBlades_/2.0*(1.0/tipDist - 1)/sin(mag(phi))
                     );
                     f *= 2.0/pi*acos(min(1.0, acosArg));
                 }
@@ -552,7 +602,7 @@ void Foam::fv::axialFlowTurbineALSource::calcEndEffects()
                 {
                     scalar acosArg = Foam::exp
                     (
-                        -g*nBlades_/2.0*(1.0/rootDist - 1)/sin(phi)
+                        -g*nBlades_/2.0*(1.0/rootDist - 1)/sin(mag(phi))
                     );
                     f = 2.0/pi*acos(min(1.0, acosArg));
                 }
@@ -561,7 +611,7 @@ void Foam::fv::axialFlowTurbineALSource::calcEndEffects()
                     scalar tipDist = 1.0 - rootDist;
                     scalar acosArg = Foam::exp
                     (
-                        -g*nBlades_/2.0*(1.0/tipDist - 1)/sin(phi)
+                        -g*nBlades_/2.0*(1.0/tipDist - 1)/sin(mag(phi))
                     );
                     f *= 2.0/pi*acos(min(1.0, acosArg));
                 }
@@ -616,14 +666,13 @@ Foam::fv::axialFlowTurbineALSource::axialFlowTurbineALSource
     scalar azimuthalOffset = coeffs_.lookupOrDefault("azimuthalOffset", 0.0);
     rotate(degToRad(azimuthalOffset));
 
-    // Tilt turbine to a static value if specified
-    scalar tiltAngle = coeffs_.lookupOrDefault("tiltAngle", 0.0);
-    tilt(degToRad(tiltAngle));
-    
     // Yaw turbine to a static value if specified
     scalar yawAngle = coeffs_.lookupOrDefault("yawAngle", 0.0);
     yaw(degToRad(yawAngle));
-
+    scalar tiltAngle = coeffs_.lookupOrDefault("tiltAngle", 0.0);
+    tilt(degToRad(tiltAngle));
+//	Info<< "axialFlowTurbineALSource created at time not function = " << tiltAngle  << endl;
+	//Info<< "chordDirection after tilting " << chordDirection  << endl;
     if (debug)
     {
         Info<< "axialFlowTurbineALSource created at time = " << time_.value()
@@ -661,37 +710,28 @@ void Foam::fv::axialFlowTurbineALSource::rotate(scalar radians)
     }
 }
 
-void Foam::fv::axialFlowTurbineALSource::rotateBladesAndHub
-(
-    scalar radians,
-    vector axis
-)
+
+void Foam::fv::axialFlowTurbineALSource::yaw(scalar radians)
 {
     if (debug)
     {
-        Info << "Rotating " << name_ << " " << radians << " radians"
-             << endl;
-        Info << "Rotation axis vector: (" << axis.x() << ", " << axis.y()
-             << ", " << axis.z() << ")" << endl << endl;
-
+        Info<< "Yawing " << name_ << " " << radians << " radians"
+            << endl << endl;
     }
 
-    // First, rotate axis
-    rotateVector(axis_, vector::zero, axis, radians);
+    // axis_ is a direction vector — rotate around vector::zero, not origin_.
+    // Using origin_ as the pivot for a direction introduces a spurious
+    // positional offset identical to the bug that existed in tilt().
+    rotateVector(axis_, vector::zero, verticalDirection_, radians);
 
-    // Second, rotate tilt axis
-    rotateVector(tiltAxis_, vector::zero, axis, radians);
-
-    // Third, rotate the blades
     forAll(blades_, i)
     {
-        blades_[i].rotate(origin_, axis, radians);
+        blades_[i].rotate(origin_, verticalDirection_, radians);
     }
 
-    // Fourth, rotate the hub
     if (hasHub_)
     {
-        hub_->rotate(origin_, axis, radians);
+        hub_->rotate(origin_, verticalDirection_, radians);
     }
 }
 
@@ -699,22 +739,62 @@ void Foam::fv::axialFlowTurbineALSource::tilt(scalar radians)
 {
     if (debug)
     {
-        Info<< "Tilting " << name_ << endl;
+        Info<< "Tilting " << name_ << " by " << radToDeg(radians)
+            << " deg around hub at " << origin_ << endl;
     }
 
-    rotateBladesAndHub(radians, tiltAxis_);
-}
+    // FIX 1: Determine tilt axis from the sign of azimuthalDirection_.y()
+    // rather than comparing exactly to vector(0,±1,0). Exact floating-point
+    // equality on a computed, normalised vector is fragile and silently
+    // applies zero tilt for any non-axis-aligned rotor orientation.
+    scalar tiltSign = (azimuthalDirection_.y() >= 0) ? -1.0 : 1.0;
+    vector tiltAxis = tiltSign * azimuthalDirection_;
+    tiltAxis /= mag(tiltAxis);
 
-void Foam::fv::axialFlowTurbineALSource::yaw(scalar radians)
-{
-    if (debug)
+    // FIX 2: axis_ is a DIRECTION vector, not a position.
+    // rotateVector() subtracts the rotation point before applying the matrix
+    // and adds it back after. For a direction this offset must be zero.
+    // Using origin_ here introduced an error of ~origin_.z * sin(tilt) in
+    // the rotated axis direction whenever the hub was not at (0,0,0).
+    rotateVector(axis_, vector::zero, tiltAxis, radians);
+
+    // FIX 3: Blade element POSITIONS are correctly rotated around origin_
+    // (the hub) — points in space pivot around the hub, which is right.
+    forAll(blades_, i)
     {
-        Info<< "Yawing " << name_ << endl;
+        blades_[i].rotate(origin_, tiltAxis, radians);
     }
 
-    rotateBladesAndHub(radians, verticalDirection_);
-}
+    if (hasHub_)
+    {
+        hub_->rotate(origin_, tiltAxis, radians);
+    }
 
+    // FIX 4: Domain clearance check — warn at startup if any element lies
+    // outside the mesh after tilting, rather than crashing mid-simulation.
+    if (Pstream::master())
+    {
+        boundBox domainBB(mesh_.points(), false);
+        forAll(blades_, i)
+        {
+            forAll(blades_[i].elements(), j)
+            {
+                const point& pos = blades_[i].elements()[j].position();
+                if (!domainBB.contains(pos))
+                {
+                    Warning
+                        << "After tiltAngle = " << radToDeg(radians)
+                        << " deg, element "
+                        << blades_[i].elements()[j].name()
+                        << " at " << pos
+                        << " lies outside the mesh domain " << domainBB
+                        << ". Extend the mesh or reduce the tilt angle."
+                        << endl;
+                }
+            }
+        }
+    }
+}
 
 void Foam::fv::axialFlowTurbineALSource::addSup
 (
@@ -965,14 +1045,14 @@ bool Foam::fv::axialFlowTurbineALSource::read(const dictionary& dict)
         hubDict_ = coeffs_.subOrEmptyDict("hub");
         if (hubDict_.keys().size() > 0)
         {
-            hasHub_ = true;
+            hasHub_ = false;
         }
 
         // Get tower information
         towerDict_ = coeffs_.subOrEmptyDict("tower");
         if (towerDict_.keys().size() > 0)
         {
-            hasTower_ = true;
+            hasTower_ = false;
         }
         includeTowerDrag_ = towerDict_.lookupOrDefault
         (

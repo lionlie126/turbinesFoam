@@ -78,17 +78,30 @@ protected:
         //- Number of blade elements
         label nElements_;
 
-        //- Free stream velocity
+        
+	label numOfElement;
+	//- Free stream velocity
         vector freeStreamVelocity_;
 
         //- Free stream direction
         vector freeStreamDirection_;
+        
+        //velocity evaluation type
+        //word velEval;
 
+		// force Projection Type
+		//word forceProj;
+		
+		//maximum chord length 
+		//scalar bladeChordMax ;
+		
         //- Total force vector from all elements
         vector force_;
 
         //- Force field from all elements
         volVectorField forceField_;
+        
+        //volScalarField factorField_;
 
         //- List of actuator line elements
         PtrList<actuatorLineElement> elements_;
@@ -110,7 +123,7 @@ protected:
 
         //- Time value to track whether to move
         scalar lastMotionTime_;
-
+	scalar pastTime_;
         //- Mean chord length of all elements
         scalar chordLength_;
 
@@ -120,6 +133,8 @@ protected:
         //- Switch for correcting end effects
         bool endEffectsActive_;
 
+	//- Switch for filtered Lifting Line
+	bool fllActive_;
 
     // Protected Member Functions
 
@@ -181,6 +196,9 @@ public:
 
             //- Return const reference to the force field
             const volVectorField& forceField();
+            
+            const volScalarField& factorField();
+
 
             //- Return reference to element pointer list
             PtrList<actuatorLineElement>& elements();

@@ -90,7 +90,39 @@ protected:
 
         //- Element span length, for calculating force
         scalar spanLength_;
+        
+        scalar avegChordLength_;
+        
+        scalar aspectRatio_;
+        
 
+	label numOfElement; 
+	List<scalar> bladePointRadius; 
+
+
+        scalar bladeRadius_;
+        ///// new added//////////////////////
+		// thickness
+		scalar thickness_;
+        
+        // Cell length 
+		scalar cellLength_;
+		
+        // bladeElementPitch
+        scalar bladeElementPitch_;
+       
+        //maximum chord length
+        scalar bladeChordMax;
+
+	scalar prevTime_;
+	//scalar GPrevTime_; 
+
+	scalar nextGPrevTime_;
+	scalar prevGPrevTime_;
+
+	//DynamicList<DynamicList<scalar>> G;
+        /////////////////////////////////
+        
         //- Element planform normal vector -- direction when the opposite of
         //  the chord direction is swept into the span direction
         vector planformNormal_;
@@ -114,11 +146,18 @@ protected:
         //  spanDirection,
         vector forceVector_;
 
+	vector forceSmeared;
         //- Reference density for incompressible case
         scalar rhoRef_;
 
         //- Inflow velocity
         vector inflowVelocity_;
+
+        //- Previous valid inflow velocity — used as fallback when sampling fails
+        vector prevInflowVelocity_;
+
+	//- Inflow velocity G
+	vector inflowVelocityG_;
 
         //- Relative flow velocity
         vector relativeVelocity_;
@@ -126,8 +165,12 @@ protected:
         //- Geometric relative flow velcity
         vector relativeVelocityGeom_;
 
-        //- Angle of attack (degrees)
+        //- Angle of attack (degrees&radians)
         scalar angleOfAttack_;
+        
+	scalar aoaUncorrected;
+
+        scalar angleOfAttackRad ;
 
         //- Geometric angle of attack (degrees, no flow curvature correction)
         scalar angleOfAttackGeom_;
@@ -137,28 +180,68 @@ protected:
 
         //- Drag coefficient;
         scalar dragCoefficient_;
+        
+	scalar liftCoefficientUncorrected ;
+        scalar dragCoefficientUncorrected ;
 
+        //vector Umean;
+	scalar normalizedLift;
+	scalar normalizedDrag;
         //- 1/4 chord moment coefficient
         scalar momentCoefficient_;
 
         //- Profile name
         word profileName_;
+        
+        vector epsilon; 
 
         //- Profile data (encapsulates coefficients)
         profileData profileData_;
+        
 
         //- Dynamic stall model
         autoPtr<dynamicStallModel> dynamicStall_;
 
+	scalar relaxFactorLC;
+	scalar relaxFactorIV;
+
         //- Switch for applying dynamic stall model
         bool dynamicStallActive_;
+	
+	//- Switch for applying filtered lifting line model
+	bool filteredLiftingLineActive_;
+	
+	//- Switch for writing output of filtered lifting line model
+	bool filteredLiftingLineWriteOutput_;
+
+
+	bool isFirstCallInTimeStep_;
 
         //- Kinematic viscosity (for calculating Re)
         scalar nu_;
 
         //- Chord Reynolds number based on relative velocity
         scalar Re_;
+        
+        //- EVM settings — read once in read(), cached to avoid per-timestep I/O
+        scalar evmDistance_;
+        scalar evmSamplingLength_;
+        label  evmNumPoints_;
 
+        //- Velocity Evaluation Type
+        word velEvalType_; 
+        
+        word forceProjType_;
+        
+        word gaussianRadiusType_;
+        
+        
+	scalar prevBladePointPerturbation_; 
+	scalar prevLiftCoefficientG_;
+	scalar liftCoefficientG_; 
+
+        ///////////////////////////////////
+        
         //- Angular velocity for flow curvature correction
         scalar omega_;
 
@@ -182,8 +265,10 @@ protected:
 
         //- Output file stream
         OFstream* outputFile_;
-
-        //- Nondimensional distance from actuator line root
+	OFstream* outputForce;
+       	OFstream* outputFll;
+	
+	//- Nondimensional distance from actuator line root
         scalar rootDistance_;
 
         //- End effect correction factor [0, 1]
@@ -201,7 +286,8 @@ protected:
         //- Number of elements used to sample velocities
         label nVelocitySamples_;
 
-
+	static List<scalar> dGList_;
+	static List<vector> relativeVelocityGList_;
     // Protected Member Functions
 
         //- Rotate a vector
@@ -217,10 +303,10 @@ protected:
         label findCell(const point& location);
 
         //- Lookup force coefficients
-        void lookupCoefficients();
+        void lookupCoefficients(scalar angleOfAttack);
 
         //- Calculate projection width epsilon
-        scalar calcProjectionEpsilon();
+        vector calcProjectionEpsilon();
 
         //- Correct for flow curvatue
         void correctFlowCurvature(scalar& angleOfAttackRad);
@@ -301,7 +387,7 @@ public:
 
             //- Return force vector from element
             const vector& force();
-
+			
             //- Return relative velocity
             const vector& relativeVelocity();
 
@@ -320,6 +406,12 @@ public:
             //- Return drag coefficient
             const scalar& dragCoefficient();
 
+            //- Return lift coefficient
+            //const scalar& normalizedLift();
+            
+            //- Return drag coefficient
+            //const scalar& normalizedDrag();
+            
             //- Return moment coefficient
             const scalar& momentCoefficient();
 
@@ -337,14 +429,39 @@ public:
             
             //- Return normal reference force (per unit span)
             scalar normalRefForce();
-
+	    
+	    scalar prevG_;
+	    scalar nextG_;
+	    scalar G_;
+	    scalar GPrevTime_;
             //- Return the inflow velocity angle w.r.t. the chord reference
             //  direction (degrees)
             //  E.g., for an axial-flow turbine this would be the angle of
             //  attack plus twist
-            scalar inflowRefAngle();
+            scalar calcInflowRefAngle();
+	    
+            // Return variables needed for filteredLiftingLine Model
+            scalar computeG();        
+	    scalar getPrevLiftCoefficient() const;
+	    //scalar getG() const;
+            
+	    scalar getNextG() const;
+	    scalar getPrevG() const;
+            //scalar getGPrevTime() const;
+	    scalar getNextGPrevTime() const;
+	    scalar getPrevGPrevTime() const;
+            scalar getPrevBladePointPerturbation() const;
 
+ 
+	   // Return the angle of attack uncorrected 
+	   scalar calcAngleOfAttackUncorrected() ;
+			
+	   // Return the angle of attack uncorrected 
+	   scalar calcAngleOfAttackCorrected() ;	
 
+	   vector computeInducedVelocity();
+
+	
         // Manipulation
 
             //- Translate the element's location
@@ -383,6 +500,12 @@ public:
             //- Set dynamic stall active
             void setDynamicStallActive(bool active);
 
+            //- Set dynamic stall active
+            void setFilteredLiftingLineActive(bool active);
+
+            //- Set dynamic stall active
+            void setFilteredLiftingLineWriteOutput(bool active);
+
             //- Set omega for flow curvature correction
             void setOmega(scalar omega);
 
@@ -395,7 +518,21 @@ public:
             //- Set number of velocity samples
             void setNVelocitySamples(label nSamples);
 
+	    //- Set previous G and next G
+            //void setG(scalar G);
+	    void setRelativeVelocityGList(const volVectorField& Uin);
+	    void setPrevG(scalar prevG);
+	    void setNextG(scalar nextG);
+	    
+	    void computeDGandAppend();
 
+	    void setPrevBladePointPerturbation(const scalar perturbation);
+
+	    void setPrevLiftCoefficient(const scalar liftcoeff);
+            //void setGPrevTime(scalar GPrevTime);
+
+	    void setNextGPrevTime(scalar nextGPrevTime);
+	    void setPrevGPrevTime(scalar prevGPrevTime); 
         // Evaluation
 
             //- Calculate forces

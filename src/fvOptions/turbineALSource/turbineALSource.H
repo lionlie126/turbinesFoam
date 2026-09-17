@@ -100,7 +100,7 @@ protected:
 
         //- Rotor radius for calculating tip speed ratio
         scalar rotorRadius_;
-
+        
         //- List of actuator lines as blades
         PtrList<actuatorLineSource> blades_;
 
@@ -139,6 +139,9 @@ protected:
 
         //- Dynamic stall dictionary
         dictionary dynamicStallDict_;
+
+	//- Filtered Lifting Line dictionary
+	dictionary filteredLiftingLineDict_;
 
         //- Amplitude of prescribed TSR oscillation
         scalar tsrAmplitude_;
