@@ -1,14 +1,19 @@
 # turbinesFoam
 
 [![DOI](https://zenodo.org/badge/4234/turbinesFoam/turbinesFoam.svg)](https://zenodo.org/badge/latestdoi/4234/turbinesFoam/turbinesFoam)
-![OpenFOAM v2412](https://img.shields.io/badge/OpenFOAM-v2412-brightgreen.svg)
-![OpenFOAM v2406](https://img.shields.io/badge/OpenFOAM-v2406-brightgreen.svg)
-![OpenFOAM v2312](https://img.shields.io/badge/OpenFOAM-v2312-brightgreen.svg)
-![OpenFOAM v2306](https://img.shields.io/badge/OpenFOAM-v2306-brightgreen.svg)
-![OpenFOAM v2212](https://img.shields.io/badge/OpenFOAM-v2212-brightgreen.svg)
+![OpenFOAM ESI v2112](https://img.shields.io/badge/OpenFOAM%20ESI-v2112-brightgreen.svg)
 
 turbinesFoam is a library for simulating wind and marine hydrokinetic turbines
 in OpenFOAM using the actuator line method.
+
+## About this fork
+
+This fork extends turbinesFoam with the Effective Velocity Model (EVM) for
+actuator-line velocity sampling, following Schito and Zasso (2014) and Muscari
+et al. (2024). It is maintained for the ESI/OpenCFD distribution of OpenFOAM;
+the current development version targets OpenFOAM v2112. The fork also includes
+general robustness and maintainability improvements, including preservation of
+turbine azimuth across simulation restarts.
 
 [![](https://cloud.githubusercontent.com/assets/4604869/10141523/f2e3ad9a-65da-11e5-971c-b736abd30c3b.png)](https://www.youtube.com/watch?v=THZvV4R1vow)
 
@@ -29,7 +34,7 @@ docker run --rm -it -v $PWD:/work ghcr.io/turbinesfoam/turbinesfoam
 
 ```sh
 cd $WM_PROJECT_USER_DIR
-git clone https://github.com/turbinesFoam/turbinesFoam.git
+git clone https://github.com/lionlie126/turbinesFoam.git
 cd turbinesFoam
 ./Allwmake
 ```
@@ -71,6 +76,10 @@ actuator lines to any compatible solver or turbulence model, e.g.,
 ## Publications
 
 Bachant, P., Goude, A., and Wosnik, M. (2016) [_Actuator line modeling of vertical-axis turbines_](https://arxiv.org/abs/1605.01449). arXiv preprint 1605.01449.
+
+Schito, P., and Zasso, A. (2014) [_Actuator forces in CFD: RANS and LES modeling in OpenFOAM_](https://doi.org/10.1088/1742-6596/524/1/012160). Journal of Physics: Conference Series, 524, 012160.
+
+Muscari, C., Schito, P., Viré, A., Zasso, A., and van Wingerden, J.-W. (2024) [_The effective velocity model: An improved approach to velocity sampling in actuator line models_](https://doi.org/10.1002/we.2894). Wind Energy, 27(5), 447-462.
 
 ## How to cite
 
