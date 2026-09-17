@@ -1,0 +1,661 @@
+airfoilEL_1
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_1_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_1_Cd"
+    );
+}
+airfoilEL_2
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_2_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_2_Cd"
+    );
+}
+
+airfoilEL_3
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_3_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_3_Cd"
+    );
+}
+
+airfoilEL_4
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_4_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_4_Cd"
+    );
+}
+
+airfoilEL_5
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_5_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_5_Cd"
+    );
+}
+
+airfoilEL_6
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_6_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_6_Cd"
+    );
+}
+
+airfoilEL_7
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_7_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_7_Cd"
+    );
+}
+
+airfoilEL_8
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_8_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_8_Cd"
+    );
+}
+
+airfoilEL_9
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_9_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_9_Cd"
+    );
+}
+
+airfoilEL_10
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_10_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_10_Cd"
+    );
+}
+
+airfoilEL_11
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_11_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_11_Cd"
+    );
+}
+
+airfoilEL_12
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_12_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_12_Cd"
+    );
+}
+
+airfoilEL_13
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_13_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_13_Cd"
+    );
+}
+
+airfoilEL_14
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_14_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_14_Cd"
+    );
+}
+
+airfoilEL_15
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_15_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_15_Cd"
+    );
+}
+
+airfoilEL_16
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_16_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_16_Cd"
+    );
+}
+
+airfoilEL_17
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_17_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_17_Cd"
+    );
+}
+
+airfoilEL_18
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_18_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_18_Cd"
+    );
+}
+
+airfoilEL_19
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_19_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_19_Cd"
+    );
+}
+
+airfoilEL_20
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_20_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_20_Cd"
+    );
+}
+
+airfoilEL_21
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_21_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_21_Cd"
+    );
+}
+
+airfoilEL_22
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_22_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_22_Cd"
+    );
+}
+
+airfoilEL_23
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_23_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_23_Cd"
+    );
+}
+
+airfoilEL_24
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_24_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_24_Cd"
+    );
+}
+
+airfoilEL_25
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_25_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_25_Cd"
+    );
+}
+
+airfoilEL_26
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_26_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_26_Cd"
+    );
+}
+
+airfoilEL_27
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_27_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_27_Cd"
+    );
+}
+
+airfoilEL_28
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_28_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_28_Cd"
+    );
+}
+
+airfoilEL_29
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_29_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_29_Cd"
+    );
+}
+
+airfoilEL_30
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_30_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_30_Cd"
+    );
+}
+
+airfoilEL_31
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_31_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_31_Cd"
+    );
+}
+
+airfoilEL_32
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_32_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_32_Cd"
+    );
+}
+
+airfoilEL_33
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_33_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_33_Cd"
+    );
+}
+
+airfoilEL_34
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_34_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_34_Cd"
+    );
+}
+
+airfoilEL_35
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_35_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_35_Cd"
+    );
+}
+
+airfoilEL_36
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_36_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_36_Cd"
+    );
+}
+
+airfoilEL_37
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_37_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_37_Cd"
+    );
+}
+
+airfoilEL_38
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_38_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_38_Cd"
+    );
+}
+
+airfoilEL_39
+{
+    tableType   multiRe;
+    ReList // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/multiRe"
+    );
+    clData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_39_Cl"
+    );
+    cdData // For tableType = multiRe
+    (
+        #include "Airfoils_turbinesFoam/airfoilEL_39_Cd"
+    );
+}

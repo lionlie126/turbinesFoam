@@ -8,6 +8,9 @@ cd $startDir/tutorials/crossFlowTurbineAL
 cd $startDir/tutorials/axialFlowTurbineAL
 ./Allclean
 
+cd $startDir/tutorials/polimi_1.2m
+./Allclean
+
 cd $startDir/tutorials/actuatorLine/pitching
 ./Allclean
 

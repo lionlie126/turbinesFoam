@@ -41,7 +41,9 @@ cd turbinesFoam
 
 ## Usage
 
-See the tutorials located in the `tutorials` directory.
+See the tutorials located in the `tutorials` directory. The `polimi_1.2m`
+tutorial provides the 1.2 m diameter PoliMi research turbine configured for
+the EVM velocity-evaluation method.
 
 ### Restarting turbine simulations
 
