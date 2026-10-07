@@ -1,0 +1,46 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2112                                 |
+|   \\  /    A nd           |                                                 |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      sampleLinesDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// Lines along y in the z = 0.001 plane, from y = -1.5R to +1.5R,
+// at x/D = 0.5, 1, 2, 3, 4 and 5 (R = 0.6 m, rotor at x = 0).
+//
+// From a decomposed case directory, run:
+//   mpirun -np <N> postProcess -parallel -dict system/sampleLinesDict -latestTime
+// or select a time explicitly: ... -time 5.99999
+// Output: postProcessing/sampleLines/<time>/xD*.csv
+
+functions
+{
+    sampleLines
+    {
+        type                sets;
+        libs                (sampling);
+        interpolationScheme cellPoint;
+        setFormat           csv;
+        fields              (UPrime2Mean turbulenceProperties:kMean UMean);
+
+        sets
+        {
+            xD0.5 { type uniform; axis xyz; start (0.6 -0.9 0.001); end (0.6 0.9 0.001); nPoints 1000; }
+            xD1   { type uniform; axis xyz; start (1.2 -0.9 0.001); end (1.2 0.9 0.001); nPoints 1000; }
+            xD2   { type uniform; axis xyz; start (2.4 -0.9 0.001); end (2.4 0.9 0.001); nPoints 1000; }
+            xD3   { type uniform; axis xyz; start (3.6 -0.9 0.001); end (3.6 0.9 0.001); nPoints 1000; }
+            xD4   { type uniform; axis xyz; start (4.8 -0.9 0.001); end (4.8 0.9 0.001); nPoints 1000; }
+            xD5   { type uniform; axis xyz; start (6.0 -0.9 0.001); end (6.0 0.9 0.001); nPoints 1000; }
+        }
+    }
+}
+
+// ************************************************************************* //

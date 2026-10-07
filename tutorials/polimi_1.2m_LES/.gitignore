@@ -1,0 +1,10 @@
+[0-9]*.[0-9]*
+[0-9]*
+constant/polyMesh/*
+processor*
+postProcessing
+*.OpenFOAM
+!constant/polyMesh/blockMeshDict
+log.*
+*.pyc
+!0.org

@@ -1,0 +1,136 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM                                        |
+|  \\    /   O peration     |                                                 |
+|   \\  /    A nd           |                                                 |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      snappyHexMeshDict;
+}
+
+castellatedMesh true;
+snap            false;
+addLayers       false;
+
+geometry
+{
+    nearWake
+    {
+        type    searchableCylinder;
+        point1  (-0.6 0 0);
+        point2  ( 8.4 0 0);
+        radius  0.9;
+    }
+
+    shearLayer
+    {
+        type    triSurfaceMesh;
+        file    "shearLayer.stl";
+    }
+};
+
+castellatedMeshControls
+{
+    maxLocalCells       250000000;
+    maxGlobalCells      250000000;
+    minRefinementCells  0;
+    maxLoadUnbalance    0.10;
+    nCellsBetweenLevels 5;
+
+    features ();
+
+    refinementSurfaces {}
+
+    resolveFeatureAngle 30;
+
+    refinementRegions
+    {
+        nearWake
+        {
+            mode    inside;
+            levels  ((1e15 2));
+        }
+        shearLayer
+        {
+            mode    distance;
+            levels ((0.25 3));
+        }
+    }
+
+    locationInMesh (2.0 0.0453 0.0287);
+
+    allowFreeStandingZoneFaces true;
+    handleSnapProblems         false;
+    useTopologicalSnapDetection false;
+}
+
+snapControls
+{
+    nSmoothPatch 3;
+    tolerance    2.0;
+    nSolveIter   30;
+    nRelaxIter   5;
+
+    nFeatureSnapIter      10;
+    implicitFeatureSnap   true;
+    explicitFeatureSnap   true;
+    multiRegionFeatureSnap false;
+
+    detectNearSurfacesSnap false;
+}
+
+addLayersControls
+{
+    relativeSizes true;
+    layers {}
+    expansionRatio        1.0;
+    finalLayerThickness   0.3;
+    minThickness          0.25;
+    nGrow                 0;
+    featureAngle          60;
+    nRelaxIter            5;
+    nSmoothSurfaceNormals 1;
+    nSmoothNormals        3;
+    nSmoothThickness      10;
+    maxFaceThicknessRatio 0.5;
+    maxThicknessToMedialRatio 0.3;
+    minMedianAxisAngle    90;
+    nBufferCellsNoExtrude 0;
+    nLayerIter            50;
+    nRelaxedIter          20;
+}
+
+meshQualityControls
+{
+    maxNonOrtho         65;
+    maxBoundarySkewness 20;
+    maxInternalSkewness 4;
+    maxConcave          80;
+    minVol              1e-13;
+    minTetQuality       1e-30;
+    minArea             -1;
+    minTwist            0.05;
+    minDeterminant      0.001;
+    minFaceWeight       0.05;
+    minVolRatio         0.01;
+    minTriangleTwist    -1;
+
+    nSmoothScale   4;
+    errorReduction 0.75;
+
+    relaxed
+    {
+        maxNonOrtho 75;
+    }
+}
+
+debug 0;
+
+mergeTolerance 1e-6;
+
+// ************************************************************************* //
