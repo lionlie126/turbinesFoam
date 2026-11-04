@@ -11,7 +11,7 @@ The operating point and actuator-line settings are:
 - tip-speed ratio: 7.5;
 - 0.6 m rotor radius and 38 actuator elements per blade;
 - EVM velocity evaluation with five sampling points;
-- isotropic Gaussian force projection with a chord-based radius;
+- isotropic Gaussian force projection with a grid-based radius;
 - dynamic stall, filtered lifting-line corrections and end effects disabled.
 
 The LES setup uses the WALE model with a `cubeRootVol` filter width, a

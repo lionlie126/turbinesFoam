@@ -36,6 +36,7 @@ turbine
 
         velEvalType         EVM;
         forceProjType       gaussianIsotropic;
+        // Use grid-based smearing for EVM, which was developed with it in mind.
         gaussianRadiusType  gridBasedGaussianRadius;
 
         dynamicStall
