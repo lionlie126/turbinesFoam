@@ -1528,6 +1528,13 @@ void Foam::fv::actuatorLineElement::calculateForce
     }
 
 
+    // Select the polar at the current element Reynolds number before any
+    // coefficient lookup, including the EVM angle-of-attack iteration.
+    // A cached previous-call/constructor polar makes the first restarted
+    // evaluation differ even when geometry and sampled inflow are identical.
+    Re_ = mag(relativeVelocity_)*chordLength_/nu_;
+    profileData_.updateRe(Re_);
+
     aoaUncorrected = calcAngleOfAttackUncorrected();
 
     // Calculate angle of attack 
@@ -1544,7 +1551,6 @@ void Foam::fv::actuatorLineElement::calculateForce
 		angleOfAttack_ = aoaUncorrected; // in degrees
     }
 
-    Re_ = mag(relativeVelocity_)*chordLength_/nu_;	
     // Calculate geometric angle of attack
     relativeVelocityGeom_ = freeStreamVelocity_ - velocity_;
     angleOfAttackGeom_ = asin((planformNormal_ & relativeVelocityGeom_)
@@ -1558,9 +1564,6 @@ void Foam::fv::actuatorLineElement::calculateForce
     {
         correctFlowCurvature(angleOfAttackRad);
     }
-
-    // Update Reynolds number of profile data
-    profileData_.updateRe(Re_);
 
     // Lookup lift and drag coefficients
     lookupCoefficients(angleOfAttack_);
@@ -1711,7 +1714,9 @@ void Foam::fv::actuatorLineElement::pitch
 )
 {
     vector rotationPoint = position_;
-    rotationPoint += chordDirection_*(chordMount_ - chordFraction);
+    // chordMount_ and chordFraction are nondimensional chord fractions.
+    // Convert their difference to a length before forming the pitch pivot.
+    rotationPoint += chordDirection_*chordLength_*(chordMount_ - chordFraction);
     rotate(rotationPoint, spanDirection_, radians, false);
 }
 
