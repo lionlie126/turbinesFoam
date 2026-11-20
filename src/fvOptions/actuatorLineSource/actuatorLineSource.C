@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "actuatorLineSource.H"
+#include "thicknessPolarFamily.H"
 #include "unitConversion.H"
 #include "addToRunTimeSelectionTable.H"
 #include "vector.H"
@@ -132,6 +133,7 @@ void Foam::fv::actuatorLineSource::createOutputFile()
 void Foam::fv::actuatorLineSource::createElements()
 {
     elements_.setSize(nElements_);
+    const thicknessPolarFamily thicknessPolars(coeffs_, profileData_, elementProfiles_);
 
     label nGeometryPoints = elementGeometry_.size();
     label nGeometrySegments = nGeometryPoints - 1;
@@ -248,7 +250,6 @@ void Foam::fv::actuatorLineSource::createElements()
         // Actuator point geometry to be calculated from elementGeometry
         label geometrySegmentIndex = i/nElementsPerSegment;
         label pointIndex = i % nElementsPerSegment;
-        label profileTypeID;
         vector position;
         scalar chordLength;
         vector chordDirection;
@@ -330,15 +331,23 @@ void Foam::fv::actuatorLineSource::createElements()
                        + deltaThicknessTotal/nElementsPerSegment*pointIndex
                        + deltaThicknessTotal/nElementsPerSegment/2;
                        
-        // Linearly interpolate airfoilTypeID
-        label profileTypeID1 = profileTypeIDs[geometrySegmentIndex];
-        label profileTypeID2 = profileTypeIDs[geometrySegmentIndex + 1];
-        scalar deltaProfileTypeIDTotal = profileTypeID2 - profileTypeID1 ;
-        profileTypeID = profileTypeID1
-                       + deltaProfileTypeIDTotal/nElementsPerSegment*pointIndex
-                       + deltaProfileTypeIDTotal/nElementsPerSegment/2;
-        
-        word profileName = elementProfiles_[profileTypeID];
+        word profileName;
+        dictionary profileDataDict;
+        if (thicknessPolars.active())
+        {
+            profileDataDict = thicknessPolars.at(thickness, profileName);
+        }
+        else
+        {
+            // Preserve historical integer profile selection for indexed cases.
+            const label id1 = profileTypeIDs[geometrySegmentIndex];
+            const label id2 = profileTypeIDs[geometrySegmentIndex + 1];
+            const scalar delta = id2 - id1;
+            const label id = id1 + delta/nElementsPerSegment*pointIndex
+                                 + delta/nElementsPerSegment/2;
+            profileName = elementProfiles_[id];
+            profileDataDict = profileData_.subDict(profileName);
+        }
 
 	word velEval;
 	word forceProj;
@@ -353,7 +362,6 @@ void Foam::fv::actuatorLineSource::createElements()
         dictionary dict;
         dict.add("position", position);
 	dict.add("bladePointRadius", bladePointRadius);
-        dictionary profileDataDict = profileData_.subDict(profileName);
         dict.add("profileData", profileDataDict);
         dict.add("profileName", profileName);
         dict.add("chordLength", chordLength);
@@ -419,7 +427,7 @@ void Foam::fv::actuatorLineSource::createElements()
             Info<< "Pitch (degrees): " << pitch << endl;
             Info<< "Span length: " << spanLength << endl;
             Info<< "Span direction: " << spanDirection << endl;
-            Info<< "Profile name index: " << profileTypeID << endl;
+            Info<< "Profile name: " << profileName << endl;
             Info<< "Profile name: " << profileName << endl;
             Info<< "writePerf: " << writeElementPerf << endl;
             Info<< "Root distance (nondimensional): " << rootDistance << endl;
