@@ -132,6 +132,7 @@ void Foam::fv::axialFlowTurbineALSource::createBlades()
         label nGeomPoints = elementData.size();
         List<List<List<scalar> > > elementGeometry(nGeomPoints);
         List<vector> initialVelocities(nGeomPoints, vector::zero);
+        pointField mountingPoints(nGeomPoints);
         // Frontal area for this blade
         scalar frontalArea = 0.0;
         scalar maxRadius = 0.0;
@@ -184,48 +185,33 @@ void Foam::fv::axialFlowTurbineALSource::createBlades()
 				point += -axialDistance*axis_;
 			}
             Info<< "point: " << point << endl;
-// Move along radial direction
+            // Move along the radial direction.
             point += radius*radialDirection_;
-            // Move along chord according to chordMount
-            scalar chordDisplacement = (chordMount - 0.25)*chordLength;
-            point -= chordDisplacement*azimuthalDirection_;
-            // Set initial velocity of quarter chord
-            scalar radiusCorr = sqrt(magSqr((chordMount - 0.25)*chordLength)
-                                     + magSqr(radius));
-            vector initialVelocity = azimuthalDirection_*omega_*radiusCorr;
-            scalar velAngle = atan2(((chordMount - 0.25)*chordLength), radius);
-            rotateVector(initialVelocity, vector::zero, axis_, velAngle);
-            initialVelocities[j] = initialVelocity;
-            // Rotate point and initial velocity according to azimuth value
+            // Rotate the mounting point and chord together to this station's azimuth.
             rotateVector(point, origin_, axis_, azimuthRadians);
-            rotateVector
-            (
-                initialVelocities[j],
-                vector::zero,
-                axis_,
-                azimuthRadians
-            );
+            mountingPoints[j] = point;
+            vector chordDirection = azimuthalDirection_;
+            rotateVector(chordDirection, vector::zero, axis_, azimuthRadians);
+            // chordMount is measured aft from the leading edge. The chord vector points forward.
+            point += (chordMount - 0.25)*chordLength*chordDirection;
+            initialVelocities[j] = omega_*(axis_ ^ (point - origin_));
 
             // Set point coordinates for AL source
             elementGeometry[j][0][0] = point.x(); // x location of geom point
             elementGeometry[j][0][1] = point.y(); // y location of geom point
             elementGeometry[j][0][2] = point.z(); // z location of geom point
 
-            // Set chord reference direction
-            vector chordDirection = azimuthalDirection_;
-
             // Set span directions for AL source
             // Blades start oriented vertically
             // Use planform normal to figure out span direction
             vector planformNormal = freeStreamDirection_;
-            vector spanDirection = chordDirection ^ planformNormal;
+            vector spanDirection = azimuthalDirection_ ^ planformNormal;
             spanDirection /= mag(spanDirection);
             // Rotate span and chord directions according to azimuth
             rotateVector(spanDirection, vector::zero, axis_, azimuthRadians);
             elementGeometry[j][1][0] = spanDirection.x();
             elementGeometry[j][1][1] = spanDirection.y();
             elementGeometry[j][1][2] = spanDirection.z();
-            rotateVector(chordDirection, vector::zero, axis_, azimuthRadians);
             elementGeometry[j][3][0] = chordDirection.x();
             elementGeometry[j][3][1] = chordDirection.y();
             elementGeometry[j][3][2] = chordDirection.z();
@@ -290,7 +276,8 @@ void Foam::fv::axialFlowTurbineALSource::createBlades()
             name_ + "." + bladeName,
             modelType,
             dict,
-            mesh_
+            mesh_,
+            mountingPoints
         );
 
         blades_.set(i, blade);

@@ -127,7 +127,7 @@ protected:
     // Protected Member Functions
 
         //- Create actuator line elements
-        void createElements();
+        void createElements(const pointField& axialMountingPoints = pointField());
 
         //- Read dictionary
         bool read(const dictionary& dict);
@@ -168,6 +168,16 @@ public:
         const word& modelType,
         const dictionary& dict,
         const fvMesh& mesh
+    );
+
+    //- Axial blade with one physical mounting point per geometry station
+    actuatorLineSource
+    (
+        const word& name,
+        const word& modelType,
+        const dictionary& dict,
+        const fvMesh& mesh,
+        const pointField& axialMountingPoints
     );
 
 

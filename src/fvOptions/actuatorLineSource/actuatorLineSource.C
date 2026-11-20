@@ -130,7 +130,7 @@ void Foam::fv::actuatorLineSource::createOutputFile()
 }
 
 
-void Foam::fv::actuatorLineSource::createElements()
+void Foam::fv::actuatorLineSource::createElements(const pointField& axialMountingPoints)
 {
     elements_.setSize(nElements_);
     const thicknessPolarFamily thicknessPolars(coeffs_, profileData_, elementProfiles_);
@@ -204,6 +204,13 @@ void Foam::fv::actuatorLineSource::createElements()
 
     // Compute aspect ratio
     aspectRatio_ = totalLength_/chordLength_;
+
+    const bool axialBlade = !axialMountingPoints.empty();
+    if (axialBlade && axialMountingPoints.size() != nGeometryPoints)
+    {
+        FatalErrorInFunction << "One axial mounting point per geometry station required"
+            << exit(FatalError);
+    }
 
     // Lookup initial element velocities if present
     List<vector> initialVelocities(nGeometryPoints, vector::zero);
@@ -317,6 +324,20 @@ void Foam::fv::actuatorLineSource::createElements()
         chordDirection = chordDir1
                        + deltaChordDirTotal/nElementsPerSegment*pointIndex
                        + deltaChordDirTotal/nElementsPerSegment/2;
+        if (axialBlade)
+        {
+            const scalar fraction = (pointIndex + 0.5)/nElementsPerSegment;
+            const point mount = (1-fraction)*axialMountingPoints[geometrySegmentIndex]
+                              + fraction*axialMountingPoints[geometrySegmentIndex + 1];
+            const scalar chordMagnitude = mag(chordDirection);
+            if (chordMagnitude < SMALL)
+            {
+                FatalIOErrorInFunction(coeffs_) << "Degenerate interpolated chord direction"
+                    << exit(FatalIOError);
+            }
+            chordDirection /= chordMagnitude;
+            position = mount + (chordMount - 0.25)*chordLength*chordDirection;
+        }
         // Chord reference direction (before pitching)
         chordRefDirection = chordDirection;
         
@@ -434,7 +455,7 @@ void Foam::fv::actuatorLineSource::createElements()
         }
         actuatorLineElement* element = new actuatorLineElement
         (
-            name, dict, mesh_
+            name, dict, mesh_, axialBlade
         );
         elements_.set(i, element);
         pitch = Foam::degToRad(pitch);
@@ -585,6 +606,19 @@ Foam::fv::actuatorLineSource::actuatorLineSource
     const fvMesh& mesh
 )
 :
+    actuatorLineSource(name, modelType, dict, mesh, pointField())
+{}
+
+
+Foam::fv::actuatorLineSource::actuatorLineSource
+(
+    const word& name,
+    const word& modelType,
+    const dictionary& dict,
+    const fvMesh& mesh,
+    const pointField& axialMountingPoints
+)
+:
     cellSetOption(name, modelType, dict, mesh),
     force_(vector::zero),
     forceField_
@@ -611,7 +645,7 @@ Foam::fv::actuatorLineSource::actuatorLineSource
     pastTime_(mesh_.time().value())
 {
     read(dict_);
-    createElements();
+    createElements(axialMountingPoints);
     if (writePerf_)
     {
         createOutputFile();

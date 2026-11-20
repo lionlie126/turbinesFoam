@@ -733,6 +733,18 @@ Foam::fv::actuatorLineElement::actuatorLineElement
     const fvMesh& mesh
 )
 :
+    actuatorLineElement(name, dict, mesh, false)
+{}
+
+
+Foam::fv::actuatorLineElement::actuatorLineElement
+(
+    const word& name,
+    const dictionary& dict,
+    const fvMesh& mesh,
+    const bool axialBlade
+)
+:
     dict_(dict),
     name_(name),
     mesh_(mesh),
@@ -756,6 +768,7 @@ Foam::fv::actuatorLineElement::actuatorLineElement
     filteredLiftingLineWriteOutput_(false),
     omega_(0.0),
     chordMount_(0.25),
+    axialBlade_(axialBlade),
     flowCurvatureActive_(false),
     flowCurvatureModelName_("none"),
     velocityLE_(vector::zero),
@@ -1693,6 +1706,11 @@ void Foam::fv::actuatorLineElement::rotate
     if (rotateVelocity)
     {
         velocity_ = RM & velocity_;
+        if (axialBlade_)
+        {
+            velocityLE_ = RM & velocityLE_;
+            velocityTE_ = RM & velocityTE_;
+        }
         chordRefDirection_ = RM & chordRefDirection_;
     }
 
@@ -1707,6 +1725,12 @@ void Foam::fv::actuatorLineElement::rotate
 }
 
 
+void Foam::fv::actuatorLineElement::pitch(scalar radians)
+{
+    pitch(radians, axialBlade_ ? chordMount_ : 0.25);
+}
+
+
 void Foam::fv::actuatorLineElement::pitch
 (
     scalar radians,
@@ -1714,9 +1738,16 @@ void Foam::fv::actuatorLineElement::pitch
 )
 {
     vector rotationPoint = position_;
-    // chordMount_ and chordFraction are nondimensional chord fractions.
-    // Convert their difference to a length before forming the pitch pivot.
-    rotationPoint += chordDirection_*chordLength_*(chordMount_ - chordFraction);
+    if (axialBlade_)
+    {
+        // position_ is the quarter chord and chordDirection_ points to the leading edge.
+        const vector chord = chordLength_*chordDirection_/mag(chordDirection_);
+        rotationPoint += (0.25 - chordFraction)*chord;
+    }
+    else
+    {
+        rotationPoint += chordDirection_*chordLength_*(chordMount_ - chordFraction);
+    }
     rotate(rotationPoint, spanDirection_, radians, false);
 }
 
@@ -1759,6 +1790,18 @@ void Foam::fv::actuatorLineElement::setSpeed
     {
         Info<< "Setting speed of " << name_ << " from rotation" << endl;
         Info<< "    Initial velocity: " << velocity_ << endl;
+    }
+
+    if (axialBlade_)
+    {
+        const vector spin = omega*axis/mag(axis);
+        const vector chord = chordLength_*chordDirection_/mag(chordDirection_);
+        velocity_ = spin ^ (position_ - point);
+        const vector chordVelocity = spin ^ chord;
+        velocityLE_ = velocity_ + 0.25*chordVelocity;
+        velocityTE_ = velocity_ - 0.75*chordVelocity;
+        setOmega(omega);
+        return;
     }
 
     // First find radius from axis to element position -- formula from

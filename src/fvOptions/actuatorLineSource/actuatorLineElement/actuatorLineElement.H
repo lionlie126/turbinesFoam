@@ -247,6 +247,9 @@ protected:
         //- Nondimensional chord mount distance
         scalar chordMount_;
 
+        //- Axial blade with a mounting fraction measured aft from the leading edge
+        const bool axialBlade_;
+
         //- Switch for applying flow curvature correction
         bool flowCurvatureActive_;
 
@@ -358,6 +361,14 @@ public:
         const word& name,
         const dictionary& dict,
         const fvMesh& mesh
+    );
+
+    actuatorLineElement
+    (
+        const word& name,
+        const dictionary& dict,
+        const fvMesh& mesh,
+        const bool axialBlade
     );
 
 
@@ -473,8 +484,11 @@ public:
                 scalar radians
             );
 
-            //- Pitch the element about some fraction of the chord
-            void pitch(scalar radians, scalar chordFraction=0.25);
+            //- Pitch about the configured mount on an axial blade
+            void pitch(scalar radians);
+
+            //- On axial blades, chordFraction is measured aft from the leading edge
+            void pitch(scalar radians, scalar chordFraction);
 
             //- Set velocity of element
             void setVelocity(vector velocity);
